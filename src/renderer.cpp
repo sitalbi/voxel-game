@@ -57,6 +57,11 @@ void voxl::Renderer::renderCube(Cube& cube, glm::mat4 model, glm::mat4 view, glm
 	glBindVertexArray(0);
 }
 
+void voxl::Renderer::renderChunks(const ChunkManager& chunkManager)
+{
+	// TODO
+}
+
 void voxl::Renderer::clear()
 {
 	glDeleteVertexArrays(1, &m_VAO);

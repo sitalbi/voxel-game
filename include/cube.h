@@ -2,10 +2,8 @@
 
 namespace voxl {
 	enum class BlockType {
-		Default,
 		Grass,
 		Dirt,
-		Water,
 		Stone,
 		Sand,
 		Wood

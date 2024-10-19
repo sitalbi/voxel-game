@@ -1,5 +1,6 @@
 #include "shader.h"
 #include "cube.h"
+#include "chunk_manager.h"
 #include "map"
 
 namespace voxl {
@@ -97,7 +98,8 @@ public:
 
 	void init();
 	void renderCube(Cube& cube, glm::mat4 model, glm::mat4 view, glm::mat4 projection);
-	void clear();
+	void renderChunks(const ChunkManager& chunkManager);
+    void clear();
 
 private:
 	unsigned int m_VAO, m_VBO, m_IBO, m_NBO;
