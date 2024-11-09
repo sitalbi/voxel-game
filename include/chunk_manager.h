@@ -18,5 +18,5 @@ public:
 private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;
 
-}
+};
 } // namespace voxl
