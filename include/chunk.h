@@ -38,13 +38,19 @@ public:
 
 	void generate();
 	void update();
+	bool isFaceVisible(glm::vec3 pos);
+	BlockType getBlock(glm::vec3 pos);
 
-	static const int CHUNK_SIZE = 16;
+	std::vector<Cube*> getCubes() { return cubes; }
 
-	std::vector<BlockType> cubes;
+	static const int CHUNK_SIZE = 8;
+
 
 private:
 	int m_x, m_y, m_z;
+
+
+	std::vector<Cube*> cubes;
 
 	std::vector<float> m_vertices; // Chunk's mesh vertices
 	std::vector<unsigned int> m_indices; // Chunk's mesh indices
@@ -52,7 +58,6 @@ private:
 	unsigned int m_VBO, m_VAO, m_EBO;
 
 	void addCubeToMesh(int x, int y, int z);
-	bool isFaceVisible(int x, int y, int z);
 	void addFace(int x, int y, int z, Face face);
 
 };

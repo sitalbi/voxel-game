@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "cube.h"
 #include "glad/glad.h"
+#include <glm/ext/matrix_transform.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -57,9 +58,53 @@ void voxl::Renderer::renderCube(Cube& cube, glm::mat4 model, glm::mat4 view, glm
 	glBindVertexArray(0);
 }
 
-void voxl::Renderer::renderChunks(const ChunkManager& chunkManager)
+void voxl::Renderer::renderCubeWithCulling(Cube& cube, glm::mat4 model, glm::mat4 view, glm::mat4 projection,
+	bool front, bool back, bool right, bool left, bool top, bool bottom)
 {
-	// TODO
+	glBindVertexArray(m_VAO);
+	m_shader->Bind();
+
+	BlockType type = cube.getType();
+	if (m_textureIDs.count(type) > 0) {
+		glBindTexture(GL_TEXTURE_2D, m_textureIDs[type]);
+		m_shader->SetUniform1i("u_Texture", 0);
+
+		// Set uniforms
+		m_shader->SetUniformMat4f("model", model);
+		m_shader->SetUniformMat4f("view", view);
+		m_shader->SetUniformMat4f("projection", projection);
+
+		// Render only the selected faces
+		if (front) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(0 * sizeof(unsigned int)));
+		if (back) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(6 * sizeof(unsigned int)));
+		if (right) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(12 * sizeof(unsigned int)));
+		if (left) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(18 * sizeof(unsigned int)));
+		if (top) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(24 * sizeof(unsigned int)));
+		if (bottom) glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(30 * sizeof(unsigned int)));
+	}
+	glBindVertexArray(0);
+}
+
+void voxl::Renderer::renderChunks(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
+{
+	for(auto cube : chunk.getCubes())
+	{
+		glm::vec3 pos = cube->getPosition();
+
+		bool renderFront = chunk.isFaceVisible(pos + glm::vec3(0, 0, 1));
+		bool renderBack = chunk.isFaceVisible(pos + glm::vec3(0, 0, -1));
+		bool renderLeft = chunk.isFaceVisible(pos + glm::vec3(-1, 0, 0));
+		bool renderRight = chunk.isFaceVisible(pos + glm::vec3(1, 0, 0));
+		bool renderTop = chunk.isFaceVisible(pos + glm::vec3(0, 1, 0));
+		bool renderBottom = chunk.isFaceVisible(pos + glm::vec3(0, -1, 0));
+
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), cube->getPosition());
+		//renderCubeWithCulling(*cube, model, view, projection, true, true, true, true, true, true);
+		if (renderFront || renderBack || renderLeft || renderRight || renderTop || renderBottom)
+		{
+			renderCubeWithCulling(*cube, model, view, projection, renderFront, renderBack, renderRight, renderLeft, renderTop, renderBottom);
+		}
+	}
 }
 
 void voxl::Renderer::clear()

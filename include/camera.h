@@ -5,9 +5,13 @@ namespace voxl {
 
 class Camera {
 public:
+	static const int width = 1920;
+	static const int height = 1080;
+
 	Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
 
 	glm::mat4 getViewMatrix() const;
+	glm::mat4 getProjectionMatrix() const;
 
 	void moveForward(float deltaTime);
 	void moveBack(float deltaTime);

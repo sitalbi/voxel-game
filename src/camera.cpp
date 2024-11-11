@@ -18,6 +18,11 @@ glm::mat4 voxl::Camera::getViewMatrix() const
 	return glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 
+glm::mat4 voxl::Camera::getProjectionMatrix() const
+{
+	return glm::perspective(glm::radians(50.0f), (float)width / (float)height, 0.1f, 500.0f);
+}
+
 void voxl::Camera::moveForward(float deltaTime)
 {
 	m_position += m_forward * m_speed *  deltaTime;

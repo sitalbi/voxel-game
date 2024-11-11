@@ -1,10 +1,3 @@
-# OpenGL project template
+# Voxel Game
 
-Template for OpenGL project configured with CMAKE.
-
-Dependencies:
-- GLAD (OpenGL loading library)
-- GLFW (Windows API)
-- GLM (OpenGL Mathematics)
-- ImGUI (UI)
-- STB (Image Loader) 
+Voxel game project inspired by Minecraft. Written in C++ using OpenGL for rendering.
