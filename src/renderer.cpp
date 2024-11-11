@@ -87,22 +87,29 @@ void voxl::Renderer::renderCubeWithCulling(Cube& cube, glm::mat4 model, glm::mat
 
 void voxl::Renderer::renderChunks(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
 {
-	for(auto cube : chunk.getCubes())
+	for(int x = 0; x<Chunk::CHUNK_SIZE; x++)
 	{
-		glm::vec3 pos = cube->getPosition();
-
-		bool renderFront = chunk.isFaceVisible(pos + glm::vec3(0, 0, 1));
-		bool renderBack = chunk.isFaceVisible(pos + glm::vec3(0, 0, -1));
-		bool renderLeft = chunk.isFaceVisible(pos + glm::vec3(-1, 0, 0));
-		bool renderRight = chunk.isFaceVisible(pos + glm::vec3(1, 0, 0));
-		bool renderTop = chunk.isFaceVisible(pos + glm::vec3(0, 1, 0));
-		bool renderBottom = chunk.isFaceVisible(pos + glm::vec3(0, -1, 0));
-
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), cube->getPosition());
-		//renderCubeWithCulling(*cube, model, view, projection, true, true, true, true, true, true);
-		if (renderFront || renderBack || renderLeft || renderRight || renderTop || renderBottom)
+		for (int z = 0; z < Chunk::CHUNK_SIZE; z++)
 		{
-			renderCubeWithCulling(*cube, model, view, projection, renderFront, renderBack, renderRight, renderLeft, renderTop, renderBottom);
+			for (int y = 0; y < Chunk::CHUNK_SIZE; y++)
+			{
+				Cube* cube = chunk.cubes[x][y][z];
+				glm::vec3 pos = cube->getPosition();
+
+				bool renderFront = chunk.isFaceVisible(pos + glm::vec3(0, 0, 1));
+				bool renderBack = chunk.isFaceVisible(pos + glm::vec3(0, 0, -1));
+				bool renderLeft = chunk.isFaceVisible(pos + glm::vec3(-1, 0, 0));
+				bool renderRight = chunk.isFaceVisible(pos + glm::vec3(1, 0, 0));
+				bool renderTop = chunk.isFaceVisible(pos + glm::vec3(0, 1, 0));
+				bool renderBottom = chunk.isFaceVisible(pos + glm::vec3(0, -1, 0));
+
+				glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
+				//renderCubeWithCulling(*cube, model, view, projection, true, true, true, true, true, true);
+				if (renderFront || renderBack || renderLeft || renderRight || renderTop || renderBottom)
+				{
+					renderCubeWithCulling(*cube, model, view, projection, renderFront, renderBack, renderRight, renderLeft, renderTop, renderBottom);
+				}
+			}
 		}
 	}
 }

@@ -47,6 +47,21 @@ int main() {
 	voxl::Chunk chunk(0, 0, 0);
 	chunk.generate();
 
+	voxl::Chunk chunk2(0, 0, voxl::Chunk::CHUNK_SIZE);
+	chunk2.generate();
+
+	voxl::Chunk chunk3(0, 0, voxl::Chunk::CHUNK_SIZE * 2);
+	chunk3.generate();
+
+	voxl::Chunk chunk4(voxl::Chunk::CHUNK_SIZE, 0, 0);
+	chunk4.generate();
+
+	voxl::Chunk chunk5(voxl::Chunk::CHUNK_SIZE, 0, voxl::Chunk::CHUNK_SIZE);
+	chunk5.generate();
+
+	voxl::Chunk chunk6(voxl::Chunk::CHUNK_SIZE, 0, voxl::Chunk::CHUNK_SIZE * 2);
+	chunk6.generate();
+
 	voxl::Camera camera(glm::vec3(1.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 	glfwSetWindowUserPointer(window, &camera);
 
@@ -66,6 +81,11 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		renderer.renderChunks(chunk, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunk2, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunk3, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunk4, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunk5, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunk6, camera.getViewMatrix(), camera.getProjectionMatrix());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
