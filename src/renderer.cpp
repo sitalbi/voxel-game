@@ -85,7 +85,7 @@ void voxl::Renderer::renderCubeWithCulling(Cube& cube, glm::mat4 model, glm::mat
 	glBindVertexArray(0);
 }
 
-void voxl::Renderer::renderChunks(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
+void voxl::Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
 {
 	for(int x = 0; x<Chunk::CHUNK_SIZE; x++)
 	{
@@ -111,6 +111,14 @@ void voxl::Renderer::renderChunks(Chunk& chunk, glm::mat4 view, glm::mat4 projec
 				}
 			}
 		}
+	}
+}
+
+void voxl::Renderer::renderChunks(ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection)
+{
+	for (auto& chunk : chunkManager.getChunks())
+	{
+		renderChunk(*chunk.second, view, projection);
 	}
 }
 

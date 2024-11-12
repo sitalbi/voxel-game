@@ -23,6 +23,11 @@ glm::mat4 voxl::Camera::getProjectionMatrix() const
 	return glm::perspective(glm::radians(50.0f), (float)width / (float)height, 0.1f, 500.0f);
 }
 
+glm::vec3 voxl::Camera::getPosition() const
+{
+	return m_position;
+}
+
 void voxl::Camera::moveForward(float deltaTime)
 {
 	m_position += m_forward * m_speed *  deltaTime;

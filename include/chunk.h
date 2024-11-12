@@ -55,9 +55,6 @@ private:
 
 	unsigned int m_VBO, m_VAO, m_EBO;
 
-	void addCubeToMesh(int x, int y, int z);
-	void addFace(int x, int y, int z, Face face);
-
 };
 
 } // namespace voxl
