@@ -6,6 +6,8 @@
 #include "shader.h"
 #include "cube.h"
 #include "camera.h"
+#include "mesh.h"
+#include "chunk_manager.h"
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -55,6 +57,7 @@ int main() {
 
 	// Cull triangles which normal is not towards the camera
 	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	voxl::Renderer renderer;
 
@@ -62,12 +65,12 @@ int main() {
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	
 
-	voxl::Camera camera(glm::vec3(1.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+	voxl::Camera camera(glm::vec3(20.0f, 30.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+
 	glfwSetWindowUserPointer(window, &camera); 
 	
-	// ChunkManager
+	// ChunkManager initialization
 	voxl::ChunkManager chunkManager;
-	chunkManager.loadChunks(camera.getPosition());
 
 	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -75,6 +78,15 @@ int main() {
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 	float currentFrame = 0.0f;
+
+	bool wireframeMode = false;
+	bool f1Pressed = false;  // Track F1 key state
+
+	GLenum err;
+	while ((err = glGetError()) != GL_NO_ERROR) {
+		std::cout << "OpenGL error: " << err << std::endl;
+	}
+
 
 	while (!glfwWindowShouldClose(window)) {
 		currentFrame = glfwGetTime();
@@ -99,6 +111,19 @@ int main() {
 		ImGui::End();
 		// ==============================================
 
+		// Wireframe mode toggle
+		if (wireframeMode) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			// disable culling
+			glDisable(GL_CULL_FACE);
+		}
+		else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glEnable(GL_CULL_FACE);
+		}
+
+
+		chunkManager.updateChunks(camera.getPosition());
 		// Rendering
 		renderer.renderChunks(chunkManager, camera.getViewMatrix(), camera.getProjectionMatrix());
 
@@ -131,6 +156,23 @@ int main() {
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, true);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+			camera.setSprint(true);
+		}
+		else {
+			camera.setSprint(false);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
+			if (!f1Pressed) {  
+				wireframeMode = !wireframeMode;
+				f1Pressed = true;  
+			}
+		}
+		else {
+			f1Pressed = false;
 		}
 
 	}

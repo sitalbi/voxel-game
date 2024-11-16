@@ -1,6 +1,7 @@
 #include "shader.h"
 #include "cube.h"
 #include "chunk_manager.h"
+#include "mesh.h"
 #include "map"
 
 namespace voxl {
@@ -98,28 +99,17 @@ public:
 	~Renderer();
 
 	void init();
-	void renderCube(Cube& cube, glm::mat4 model, glm::mat4 view, glm::mat4 projection);
-    void renderCubeWithCulling(Cube& cube, glm::mat4 model, glm::mat4 view, glm::mat4 projection,
-        bool front, bool back, bool right, bool left, bool top, bool bottom);
 	void renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection);
-    void renderChunks(ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection);
+    void renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection);
+
+    void renderMesh(Mesh* mesh, glm::mat4 model, glm::mat4 view, glm::mat4 projection);
+
     void clear();
 
 private:
-	unsigned int m_VAO, m_VBO, m_IBO, m_NBO;
 	Shader* m_shader;
     bool m_initialized;
 
-	unsigned int m_vertexDataSize;
-	unsigned int m_indexDataCount;
-	const float* m_vertexData;
-	const unsigned int* m_indexData;
-    unsigned int m_normalDataSize;
-	const float* m_normalData;
-
-	std::map<BlockType, unsigned int> m_textureIDs;
-
-	void setupCube();
 	unsigned int loadTexture(const char* path);
 };
 }; // namespace voxl

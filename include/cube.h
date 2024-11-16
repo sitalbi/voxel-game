@@ -1,5 +1,5 @@
 #pragma once
-
+#include "mesh.h"
 #include <glm/glm.hpp>
 
 namespace voxl {

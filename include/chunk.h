@@ -1,5 +1,6 @@
 #include "cube.h"
 #include "glad/glad.h"
+#include "mesh.h"
 #include "vector"
 
 namespace voxl
@@ -29,31 +30,48 @@ enum class Face
 	Bottom
 };
 
+struct Quad {
+	int x;        
+	int y;       
+	int z;       
+	int width;    
+	int height;   
+	int axis;     
+};
+
+
 class Chunk {
 
 
 public:
+	static const int CHUNK_SIZE = 32;
+
 	Chunk(int x, int y, int z);
 	~Chunk();
 
 	void generate();
-	void update();
-	bool isFaceVisible(glm::vec3 pos);
+	void generateMesh();
+
+	bool isFaceVisible(int x, int y, int z, int direction);
 	BlockType getBlock(glm::vec3 pos);
 
+	Mesh* getMesh() { return m_mesh; }
 
-	static const int CHUNK_SIZE = 16;
+	glm::vec3 getPosition() { return glm::vec3(m_x, m_y, m_z); }
 
-	Cube* cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+
+	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+
+	int getIndexCount() { return m_indexCount; }
 
 private:
 	int m_x, m_y, m_z;
+	int m_indexCount;
 
+	Mesh* m_mesh;
 
-	std::vector<float> m_vertices; // Chunk's mesh vertices
-	std::vector<unsigned int> m_indices; // Chunk's mesh indices
-
-	unsigned int m_VBO, m_VAO, m_EBO;
+	void addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<unsigned int>& indices,
+				int x, int y, int z, int faceIndex);
 
 };
 

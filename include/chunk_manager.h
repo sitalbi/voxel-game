@@ -1,3 +1,5 @@
+#pragma once
+
 #include "chunk.h"
 #include "glm/glm.hpp"
 #include <unordered_map>
@@ -29,9 +31,9 @@ public:
 	void unloadChunks(glm::vec3 playerPosition);
 
 	Chunk* getChunk(int x, int y, int z);
-	std::unordered_map<glm::ivec3, Chunk*>& getChunks() { return m_chunks; }
+	std::unordered_map<glm::ivec3, Chunk*> getChunks() const { return m_chunks; }
 
-	static const int LOAD_RADIUS = 2;
+	static const int LOAD_RADIUS = 8;
 
 private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;

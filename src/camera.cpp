@@ -3,12 +3,13 @@
 
 voxl::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
 {
+
 	m_position = position;
 	m_worldUp = up;
 	m_yaw = yaw;
 	m_pitch = pitch;
 
-	m_speed = 5.0f;
+	m_speed = m_defaultSpeed;
 
 	updateCameraVectors();
 }
@@ -20,7 +21,7 @@ glm::mat4 voxl::Camera::getViewMatrix() const
 
 glm::mat4 voxl::Camera::getProjectionMatrix() const
 {
-	return glm::perspective(glm::radians(50.0f), (float)width / (float)height, 0.1f, 500.0f);
+	return glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 500.0f);
 }
 
 glm::vec3 voxl::Camera::getPosition() const
@@ -56,6 +57,18 @@ void voxl::Camera::moveUp(float deltaTime)
 void voxl::Camera::moveDown(float deltaTime)
 {
 	m_position -= m_up * m_speed * deltaTime;
+}
+
+void voxl::Camera::setSprint(bool activate)
+{
+	if (activate)
+	{
+		m_speed = m_defaultSpeed * 2.0f;
+	}
+	else
+	{
+		m_speed = m_defaultSpeed;
+	}
 }
 
 void voxl::Camera::processMouseMovement(float xoffset, float yoffset) {

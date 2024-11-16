@@ -21,6 +21,8 @@ public:
 	void moveUp(float deltaTime);
 	void moveDown(float deltaTime);
 
+	void setSprint(bool activate);
+
 	void processMouseMovement(float xoffset, float yoffset);
 
 	void updateCameraVectors();
@@ -35,6 +37,8 @@ private:
 	float m_yaw;
 	float m_pitch;
 	float m_speed;
+
+	float m_defaultSpeed = 10.0f;
 };
 
 } // namespace voxl
