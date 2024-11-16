@@ -1,8 +1,8 @@
 #pragma once
 
-#include "chunk.h"
 #include "glm/glm.hpp"
 #include <unordered_map>
+#include <unordered_set>
 
 namespace std {
 	template <>
@@ -20,6 +20,9 @@ namespace std {
 
 namespace voxl
 {
+
+class Chunk;
+
 class ChunkManager
 {
 public:
@@ -37,5 +40,7 @@ public:
 
 private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;
+
+	std::unordered_set<glm::ivec3> m_updateList;
 };
 } // namespace voxl

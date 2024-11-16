@@ -65,7 +65,7 @@ int main() {
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	
 
-	voxl::Camera camera(glm::vec3(20.0f, 30.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+	voxl::Camera camera(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 
 	glfwSetWindowUserPointer(window, &camera); 
 	
@@ -124,6 +124,7 @@ int main() {
 
 
 		chunkManager.updateChunks(camera.getPosition());
+
 		// Rendering
 		renderer.renderChunks(chunkManager, camera.getViewMatrix(), camera.getProjectionMatrix());
 

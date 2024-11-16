@@ -1,4 +1,5 @@
 #include "chunk_manager.h"
+#include "chunk.h"
 #include <iostream>
 
 voxl::ChunkManager::ChunkManager()
@@ -24,12 +25,14 @@ void voxl::ChunkManager::loadChunks(glm::vec3 playerPosition)
 	{
 		for (int z = playerChunkZ - ChunkManager::LOAD_RADIUS; z < playerChunkZ + ChunkManager::LOAD_RADIUS; z++)
 		{
-			// Check if the chunk is already loaded
-			if (m_chunks.find(glm::ivec3(x, 0, z)) == m_chunks.end())
+			glm::ivec3 chunkPos(x, 0, z);
+
+			if (m_chunks.find(chunkPos) == m_chunks.end())
 			{
-				Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE);
+				Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE, this);
 				chunk->generate();
-				m_chunks[glm::ivec3(x, 0, z)] = chunk;
+				m_chunks[chunkPos] = chunk;
+				m_updateList.insert(chunkPos);
 			}
 		}
 	}
@@ -39,6 +42,17 @@ void voxl::ChunkManager::updateChunks(glm::vec3 playerPosition)
 {
 	loadChunks(playerPosition);
 	unloadChunks(playerPosition);
+
+	for (const glm::ivec3& chunkPos : m_updateList)
+	{
+		auto it = m_chunks.find(chunkPos);
+		if (it != m_chunks.end())
+		{
+			it->second->generateMesh();
+		}
+	}
+
+	m_updateList.clear();
 }
 
 void voxl::ChunkManager::unloadChunks(glm::vec3 playerPosition)
@@ -65,5 +79,20 @@ void voxl::ChunkManager::unloadChunks(glm::vec3 playerPosition)
 
 voxl::Chunk* voxl::ChunkManager::getChunk(int x, int y, int z)
 {
+	// Convert world coordinates to chunk indices
+	int chunkX = x / Chunk::CHUNK_SIZE;
+	int chunkY = y / Chunk::CHUNK_SIZE;
+	int chunkZ = z / Chunk::CHUNK_SIZE;
+
+	if (x < 0 && x % Chunk::CHUNK_SIZE != 0) chunkX -= 1;
+	if (y < 0 && y % Chunk::CHUNK_SIZE != 0) chunkY -= 1;
+	if (z < 0 && z % Chunk::CHUNK_SIZE != 0) chunkZ -= 1;
+
+	glm::ivec3 chunkPos(chunkX, chunkY, chunkZ);
+	auto it = m_chunks.find(chunkPos);
+	if (it != m_chunks.end())
+	{
+		return it->second;
+	}
 	return nullptr;
 }

@@ -1,15 +1,26 @@
 #include "chunk.h"
+#include "chunk_manager.h"
 #include "glm/glm.hpp"
 #include <array>
 #include <iostream>
 #define FNL_IMPL
 #include "FastNoiseLite.h"
 
-voxl::Chunk::Chunk(int x, int y, int z)
+voxl::Chunk::Chunk(const Chunk* chunk)
 {
-    m_x = x;
-    m_y = y;
-    m_z = z;
+	m_x = chunk->m_x;
+	m_y = chunk->m_y;
+	m_z = chunk->m_z;
+	m_mesh = nullptr;
+}
+
+voxl::Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
+{
+	m_x = x;
+	m_y = y;
+	m_z = z;
+	m_chunkManager = chunkManager;
+	m_mesh = nullptr;
 }
 
 voxl::Chunk::~Chunk()
@@ -54,8 +65,6 @@ void voxl::Chunk::generate()
             }
         }
     }
-
-    generateMesh();
 }
 
 
@@ -156,37 +165,47 @@ void voxl::Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec
 
 bool voxl::Chunk::isFaceVisible(int x, int y, int z, int direction)
 {
-    if (direction == 0) {
-        return x == 0 || cubes[x - 1][y][z] == BlockType::None;
+    if (direction == 0) { // Left face
+        if (x == 0) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
+            return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None;
+        }
+        return cubes[x - 1][y][z] == BlockType::None;
     }
-    else if (direction == 1) {
-        return x == CHUNK_SIZE - 1 || cubes[x + 1][y][z] == BlockType::None;
+    else if (direction == 1) { // Right face
+        if (x == CHUNK_SIZE - 1) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y , m_z );
+            return !neighbor || neighbor->cubes[0][y][z] == BlockType::None;
+        }
+        return cubes[x + 1][y][z] == BlockType::None;
     }
-    else if (direction == 2) {
-        return y == 0 || cubes[x][y - 1][z] == BlockType::None;
+    else if (direction == 2) { // Bottom face
+        if (y == 0) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_SIZE, m_z);
+            return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None;
+        }
+        return cubes[x][y - 1][z] == BlockType::None;
     }
-    else if (direction == 3) {
-        return y == CHUNK_SIZE - 1 || cubes[x][y + 1][z] == BlockType::None;
+    else if (direction == 3) { // Top face
+        if (y == CHUNK_SIZE - 1) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_SIZE, m_z);
+            return !neighbor || neighbor->cubes[x][0][z] == BlockType::None;
+        }
+        return cubes[x][y + 1][z] == BlockType::None;
     }
-    else if (direction == 4) {
-        return z == 0 || cubes[x][y][z - 1] == BlockType::None;
+    else if (direction == 4) { // Back face
+        if (z == 0) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
+            return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None;
+        }
+        return cubes[x][y][z - 1] == BlockType::None;
     }
-    else if (direction == 5) {
-        return z == CHUNK_SIZE - 1 || cubes[x][y][z + 1] == BlockType::None;
+    else if (direction == 5) { // Front face
+        if (z == CHUNK_SIZE - 1) {
+            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
+            return !neighbor || neighbor->cubes[x][y][0] == BlockType::None;
+        }
+        return cubes[x][y][z + 1] == BlockType::None;
     }
     return false;
-}
-
-voxl::BlockType voxl::Chunk::getBlock(glm::vec3 pos)
-{
-    int x = static_cast<int>(pos.x) - m_x;
-    int y = static_cast<int>(pos.y) - m_y;
-    int z = static_cast<int>(pos.z) - m_z;
-
-    // Check if the position is within the chunk bounds
-    if (x >= 0 && x < CHUNK_SIZE && y >= 0 && y < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE) {
-        return cubes[x][y][z];
-    }
-
-    return BlockType::None;
 }
