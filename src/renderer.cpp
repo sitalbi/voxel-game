@@ -6,33 +6,35 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-voxl::Renderer::Renderer() : m_initialized(false)
+namespace voxl {
+
+Renderer::Renderer() : m_initialized(false)
 {
 	init();
 }
 
-voxl::Renderer::~Renderer()
+Renderer::~Renderer()
 {
 	clear();
 	delete m_shader;
 }
 
 
-void voxl::Renderer::init()
+void Renderer::init()
 {
 	if (m_initialized)
 		return;
-	m_shader = new Shader(RES_DIR "/shaders/defaultCubeVertex.glsl", RES_DIR "/shaders/defaultCubeFragment.glsl");
+	m_shader = new Shader(RES_DIR "/shaders/default_vert.glsl", RES_DIR "/shaders/default_frag.glsl");
 	m_initialized = true;
 }
 
 
-void voxl::Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
+void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
 {	
 	renderMesh(chunk.getMesh(), glm::translate(glm::mat4(1.0),chunk.getPosition()), view, projection);
 }
 
-void voxl::Renderer::renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection)
+void Renderer::renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection)
 {
 	for (auto& chunk : chunkManager.getChunks())
 	{
@@ -40,7 +42,7 @@ void voxl::Renderer::renderChunks(const ChunkManager& chunkManager, glm::mat4 vi
 	}
 }
 
-void voxl::Renderer::renderMesh(Mesh* mesh, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void Renderer::renderMesh(Mesh* mesh, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 {
 	glBindVertexArray(mesh->VAO);
 
@@ -57,12 +59,12 @@ void voxl::Renderer::renderMesh(Mesh* mesh, glm::mat4 model, glm::mat4 view, glm
 	glBindVertexArray(0);
 }
 
-void voxl::Renderer::clear()
+void Renderer::clear()
 {
 	glDeleteProgram(m_shader->GetID());
 }
 
-unsigned int voxl::Renderer::loadTexture(const char* path)
+unsigned int Renderer::loadTexture(const char* path)
 {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
@@ -89,3 +91,5 @@ unsigned int voxl::Renderer::loadTexture(const char* path)
 	}
 	return textureID;
 }
+
+}; // namespace voxl

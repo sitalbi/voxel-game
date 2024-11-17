@@ -2,31 +2,33 @@
 #include "glad/glad.h"
 #include <iostream>
 
-voxl::Mesh::Mesh()
+namespace voxl {
+
+Mesh::Mesh()
 {
-	vertices = std::vector<glm::vec3>();
-	normals = std::vector<glm::vec3>();
-	indices = std::vector<unsigned int>();
+    vertices = std::vector<glm::vec3>();
+    normals = std::vector<glm::vec3>();
+    indices = std::vector<unsigned int>();
 }
 
-voxl::Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<unsigned int> indices)
+Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<unsigned int> indices)
 {
-	this->vertices = vertices;
-	this->normals = normals;
-	this->indices = indices;
+    this->vertices = vertices;
+    this->normals = normals;
+    this->indices = indices;
 
-	generateBuffers();
+    generateBuffers();
 }
 
-voxl::Mesh::~Mesh()
+Mesh::~Mesh()
 {
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteBuffers(1, &NBO);
-	glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &NBO);
+    glDeleteVertexArrays(1, &VAO);
 }
 
-void voxl::Mesh::generateBuffers()
+void Mesh::generateBuffers()
 {
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -57,3 +59,5 @@ void voxl::Mesh::generateBuffers()
     // Unbind VAO to prevent accidental modification
     glBindVertexArray(0);
 }
+
+} // namespace voxl

@@ -3,10 +3,13 @@
 #include "glm/glm.hpp"
 #include <array>
 #include <iostream>
+
 #define FNL_IMPL
 #include "FastNoiseLite.h"
 
-voxl::Chunk::Chunk(const Chunk* chunk)
+namespace voxl {
+
+Chunk::Chunk(const Chunk* chunk)
 {
 	m_x = chunk->m_x;
 	m_y = chunk->m_y;
@@ -14,7 +17,7 @@ voxl::Chunk::Chunk(const Chunk* chunk)
 	m_mesh = nullptr;
 }
 
-voxl::Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
+Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 {
 	m_x = x;
 	m_y = y;
@@ -23,14 +26,13 @@ voxl::Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 	m_mesh = nullptr;
 }
 
-voxl::Chunk::~Chunk()
+Chunk::~Chunk()
 {
     delete m_mesh;
 }
 
-void voxl::Chunk::generate()
+void Chunk::generate()
 {
-    // Initialize FastNoiseLite for Perlin noise
     fnl_state noise = fnlCreateState();
     noise.noise_type = FNL_NOISE_PERLIN;
     noise.frequency = 0.015f;
@@ -39,7 +41,6 @@ void voxl::Chunk::generate()
     {
         for (int z = 0; z < CHUNK_SIZE; z++)
         {
-            // Generate a height for the current (x, z) position based on noise
             float noiseValue = fnlGetNoise2D(&noise, m_x + x, m_z + z);
             int maxHeight = static_cast<int>((noiseValue + 1.0f) * (CHUNK_SIZE / 2)); 
 
@@ -47,7 +48,7 @@ void voxl::Chunk::generate()
             {
                 BlockType type = BlockType::None;
 
-                if (y < maxHeight)  // Only set blocks up to maxHeight
+                if (y < maxHeight) 
                 {
                     if (y < maxHeight - 2) {
                         type = BlockType::Stone;
@@ -68,7 +69,7 @@ void voxl::Chunk::generate()
 }
 
 
-void voxl::Chunk::generateMesh() {
+void Chunk::generateMesh() {
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
     std::vector<uint32_t> indices;
@@ -91,7 +92,7 @@ void voxl::Chunk::generateMesh() {
     m_mesh = new Mesh(vertices, normals, indices);
 }
 
-void voxl::Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices,
+void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices,
     int x, int y, int z, int faceIndex) {
     glm::vec3 v1, v2, v3, v4;
     glm::vec3 normal;
@@ -163,7 +164,7 @@ void voxl::Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec
 }
 
 
-bool voxl::Chunk::isFaceVisible(int x, int y, int z, int direction)
+bool Chunk::isFaceVisible(int x, int y, int z, int direction)
 {
     if (direction == 0) { // Left face
         if (x == 0) {
@@ -209,3 +210,5 @@ bool voxl::Chunk::isFaceVisible(int x, int y, int z, int direction)
     }
     return false;
 }
+
+} // namespace voxl

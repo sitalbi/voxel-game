@@ -26,6 +26,8 @@ class Chunk;
 class ChunkManager
 {
 public:
+	static const int LOAD_RADIUS = 12;
+
 	ChunkManager();
 	~ChunkManager();
 
@@ -36,7 +38,6 @@ public:
 	Chunk* getChunk(int x, int y, int z);
 	std::unordered_map<glm::ivec3, Chunk*> getChunks() const { return m_chunks; }
 
-	static const int LOAD_RADIUS = 8;
 
 private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;

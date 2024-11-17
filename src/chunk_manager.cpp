@@ -2,11 +2,13 @@
 #include "chunk.h"
 #include <iostream>
 
-voxl::ChunkManager::ChunkManager()
+namespace voxl {
+
+ChunkManager::ChunkManager()
 {
 }
 
-voxl::ChunkManager::~ChunkManager()
+ChunkManager::~ChunkManager()
 {
 	for (auto& chunk : m_chunks)
 	{
@@ -15,7 +17,7 @@ voxl::ChunkManager::~ChunkManager()
 	m_chunks.clear();
 }
 
-void voxl::ChunkManager::loadChunks(glm::vec3 playerPosition)
+void ChunkManager::loadChunks(glm::vec3 playerPosition)
 {
 	// Load chunks around the player
 	int playerChunkX = static_cast<int>(playerPosition.x) / Chunk::CHUNK_SIZE;
@@ -38,7 +40,7 @@ void voxl::ChunkManager::loadChunks(glm::vec3 playerPosition)
 	}
 }
 
-void voxl::ChunkManager::updateChunks(glm::vec3 playerPosition)
+void ChunkManager::updateChunks(glm::vec3 playerPosition)
 {
 	loadChunks(playerPosition);
 	unloadChunks(playerPosition);
@@ -55,7 +57,7 @@ void voxl::ChunkManager::updateChunks(glm::vec3 playerPosition)
 	m_updateList.clear();
 }
 
-void voxl::ChunkManager::unloadChunks(glm::vec3 playerPosition)
+void ChunkManager::unloadChunks(glm::vec3 playerPosition)
 {
 	// Unload chunks that are too far away from the player
 	int playerChunkX = static_cast<int>(playerPosition.x) / Chunk::CHUNK_SIZE;
@@ -77,7 +79,7 @@ void voxl::ChunkManager::unloadChunks(glm::vec3 playerPosition)
 	}
 }
 
-voxl::Chunk* voxl::ChunkManager::getChunk(int x, int y, int z)
+Chunk* ChunkManager::getChunk(int x, int y, int z)
 {
 	// Convert world coordinates to chunk indices
 	int chunkX = x / Chunk::CHUNK_SIZE;
@@ -96,3 +98,5 @@ voxl::Chunk* voxl::ChunkManager::getChunk(int x, int y, int z)
 	}
 	return nullptr;
 }
+
+} // namespace voxl

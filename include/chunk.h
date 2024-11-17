@@ -21,27 +21,20 @@ public:
 	Chunk(int x, int y, int z, ChunkManager* chunkManager);
 	~Chunk();
 
+	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+
+	Mesh* getMesh() { return m_mesh; }
+	glm::vec3 getPosition() { return glm::vec3(m_x, m_y, m_z); }
+	int getIndexCount() { return m_indexCount; }
+
 	void generate();
 	void generateMesh();
 
 	bool isFaceVisible(int x, int y, int z, int direction);
-	bool needsUpdate() { return toUpdate; }
-	void setUpdate(bool update) { toUpdate = update; }
-
-	Mesh* getMesh() { return m_mesh; }
-
-	glm::vec3 getPosition() { return glm::vec3(m_x, m_y, m_z); }
-
-
-	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-
-	int getIndexCount() { return m_indexCount; }
 
 private:
 	int m_x, m_y, m_z;
 	int m_indexCount;
-
-	bool toUpdate = false;
 
 	ChunkManager* m_chunkManager;
 

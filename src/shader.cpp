@@ -1,19 +1,20 @@
 #include "shader.h"
 
+namespace voxl {
 
-voxl::Shader::Shader(const std::string& vertexFilePath, const std::string& fragmentFilePath)
+Shader::Shader(const std::string& vertexFilePath, const std::string& fragmentFilePath)
     : m_vertexFilePath(vertexFilePath), m_fragmentFilePath(fragmentFilePath), m_RendererID(0)
 {
     m_RendererID = CompileShader();
     Bind();
 }
 
-voxl::Shader::~Shader()
+Shader::~Shader()
 {
     glDeleteProgram(m_RendererID);
 }
 
-unsigned int voxl::Shader::CompileShader() {
+unsigned int Shader::CompileShader() {
     // Create the shaders
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -106,7 +107,7 @@ unsigned int voxl::Shader::CompileShader() {
     return ProgramID;
 }
 
-int voxl::Shader::GetUniformLocation(const std::string& name)
+int Shader::GetUniformLocation(const std::string& name)
 {
     if (m_UniformLocationCache.find(name) != m_UniformLocationCache.end())
     {
@@ -119,17 +120,17 @@ int voxl::Shader::GetUniformLocation(const std::string& name)
     }
 }
 
-void voxl::Shader::Bind() const
+void Shader::Bind() const
 {
     glUseProgram(m_RendererID);
 }
 
-void voxl::Shader::Unbind() const
+void Shader::Unbind() const
 {
     glUseProgram(0);
 }
 
-void voxl::Shader::SetUniform1f(const std::string& name, float value)
+void Shader::SetUniform1f(const std::string& name, float value)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -138,7 +139,7 @@ void voxl::Shader::SetUniform1f(const std::string& name, float value)
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
-void voxl::Shader::SetUniform2f(const std::string& name, float v0, float v1)
+void Shader::SetUniform2f(const std::string& name, float v0, float v1)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -147,7 +148,7 @@ void voxl::Shader::SetUniform2f(const std::string& name, float v0, float v1)
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
-void voxl::Shader::SetUniform3f(const std::string& name, float v0, float v1, float v2)
+void Shader::SetUniform3f(const std::string& name, float v0, float v1, float v2)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -156,7 +157,7 @@ void voxl::Shader::SetUniform3f(const std::string& name, float v0, float v1, flo
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
-void voxl::Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
+void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -165,7 +166,7 @@ void voxl::Shader::SetUniform4f(const std::string& name, float v0, float v1, flo
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
-void voxl::Shader::SetUniform1i(const std::string& name, int value)
+void Shader::SetUniform1i(const std::string& name, int value)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -174,7 +175,7 @@ void voxl::Shader::SetUniform1i(const std::string& name, int value)
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
-void voxl::Shader::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
+void Shader::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
 {
     int location = GetUniformLocation(name);
     if (location != -1)
@@ -182,3 +183,5 @@ void voxl::Shader::SetUniformMat4f(const std::string& name, const glm::mat4& mat
     else
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
+
+}; // namespace voxl

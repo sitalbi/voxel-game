@@ -1,77 +1,51 @@
 #include "camera.h"
 #include "GLFW/glfw3.h"
 
-voxl::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-{
+namespace voxl {
 
+Camera::Camera(int width, int height, glm::vec3 up, float yaw, float pitch)
+{
+	m_width = width;
+	m_height = height;
+	m_worldUp = up;
+	m_yaw = yaw;
+	m_pitch = pitch;
+
+	updateCameraVectors();
+}
+
+Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
+{
 	m_position = position;
 	m_worldUp = up;
 	m_yaw = yaw;
 	m_pitch = pitch;
 
-	m_speed = m_defaultSpeed;
-
 	updateCameraVectors();
 }
 
-glm::mat4 voxl::Camera::getViewMatrix() const
+
+glm::mat4 Camera::getViewMatrix() const
 {
 	return glm::lookAt(m_position, m_position + m_forward, m_up);
 }
 
-glm::mat4 voxl::Camera::getProjectionMatrix() const
+glm::mat4 Camera::getProjectionMatrix() const
 {
-	return glm::perspective(glm::radians(60.0f), (float)width / (float)height, 0.1f, 500.0f);
+	return glm::perspective(glm::radians(60.0f), (float)m_width / (float)m_height, m_nearClippingPlane, m_farClippingPlane);
 }
 
-glm::vec3 voxl::Camera::getPosition() const
+glm::vec3 Camera::getPosition() const
 {
 	return m_position;
 }
 
-void voxl::Camera::moveForward(float deltaTime)
+void Camera::setPosition(glm::vec3 position)
 {
-	m_position += m_forward * m_speed *  deltaTime;
+	m_position = position;
 }
 
-void voxl::Camera::moveBack(float deltaTime)
-{
-	m_position -= m_forward * m_speed * deltaTime;
-}
-
-void voxl::Camera::moveRight(float deltaTime)
-{
-	m_position += m_right * m_speed * deltaTime;
-}
-
-void voxl::Camera::moveLeft(float deltaTime)
-{
-	m_position -= m_right * m_speed * deltaTime;
-}
-
-void voxl::Camera::moveUp(float deltaTime)
-{
-	m_position += m_up * m_speed * deltaTime;
-}
-
-void voxl::Camera::moveDown(float deltaTime)
-{
-	m_position -= m_up * m_speed * deltaTime;
-}
-
-void voxl::Camera::setSprint(bool activate)
-{
-	if (activate)
-	{
-		m_speed = m_defaultSpeed * 2.0f;
-	}
-	else
-	{
-		m_speed = m_defaultSpeed;
-	}
-}
-
-void voxl::Camera::processMouseMovement(float xoffset, float yoffset) {
+void Camera::processMouseMovement(float xoffset, float yoffset) {
 	float sensitivity = 0.1f; 
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
@@ -86,7 +60,7 @@ void voxl::Camera::processMouseMovement(float xoffset, float yoffset) {
 }
 
 
-void voxl::Camera::updateCameraVectors() {
+void Camera::updateCameraVectors() {
 	glm::vec3 front;
 	front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 	front.y = sin(glm::radians(m_pitch));
@@ -97,5 +71,4 @@ void voxl::Camera::updateCameraVectors() {
 	m_up = glm::normalize(glm::cross(m_right, m_forward));
 }
 
-
-
+} // namespace voxl

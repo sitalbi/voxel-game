@@ -1,21 +1,25 @@
 #include "cube.h"
 
-voxl::Cube::Cube(voxl::BlockType type, glm::vec3 position)
+namespace voxl {
+
+Cube::Cube(BlockType type, glm::vec3 position)
 {
 	m_type = type;
 	m_position = position;
 }
 
-voxl::Cube::~Cube()
+Cube::~Cube()
 {
 }
 
-voxl::BlockType voxl::Cube::getType()
+BlockType Cube::getType()
 {
 	return m_type;
 }
 
-glm::vec3 voxl::Cube::getPosition()
+glm::vec3 Cube::getPosition()
 {
 	return m_position;
 }
+
+} // namespace voxl

@@ -15,6 +15,10 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include <player.h>
+
+#define window_width 1920
+#define window_height 1080
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
@@ -26,7 +30,7 @@ int main() {
 		return -1;
 	}
 
-	window = glfwCreateWindow(voxl::Camera::width, voxl::Camera::height, "Voxel Game", NULL, NULL);
+	window = glfwCreateWindow(window_width, window_height, "Voxel Game", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -45,8 +49,6 @@ int main() {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init();
 
-
-
 	// Load OpenGL functions
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		return -1;
@@ -59,34 +61,23 @@ int main() {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+	// Initialization
 	voxl::Renderer renderer;
 
-	// Initialize matrices
-	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	
+	voxl::Camera camera(window_width, window_height, glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 
-	voxl::Camera camera(glm::vec3(0.0f, 30.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
-
-	glfwSetWindowUserPointer(window, &camera); 
+	voxl::Player player(glm::vec3(0.0f, 30.0f, 0.0f), camera);
 	
-	// ChunkManager initialization
 	voxl::ChunkManager chunkManager;
 
+	// Window settings
 	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetWindowUserPointer(window, &camera);
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 	float currentFrame = 0.0f;
-
-	bool wireframeMode = false;
-	bool f1Pressed = false;  // Track F1 key state
-
-	GLenum err;
-	while ((err = glGetError()) != GL_NO_ERROR) {
-		std::cout << "OpenGL error: " << err << std::endl;
-	}
-
 
 	while (!glfwWindowShouldClose(window)) {
 		currentFrame = glfwGetTime();
@@ -101,32 +92,23 @@ int main() {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		// Set window position and size
-		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always); // Top left with a 10-pixel offset
-		ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Always); // Set size to 300x100 pixels
+		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Always); 
 
-		// Create an ImGui window with no title bar, resize, or move
 		ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text("App average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::End();
 		// ==============================================
 
-		// Wireframe mode toggle
-		if (wireframeMode) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			// disable culling
-			glDisable(GL_CULL_FACE);
-		}
-		else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			glEnable(GL_CULL_FACE);
-		}
+		// Player update
+		player.processInput(window, deltaTime);
+		player.update(deltaTime);
 
-
-		chunkManager.updateChunks(camera.getPosition());
+		// ChunkManager update
+		chunkManager.updateChunks(player.getPosition());
 
 		// Rendering
-		renderer.renderChunks(chunkManager, camera.getViewMatrix(), camera.getProjectionMatrix());
+		renderer.renderChunks(chunkManager, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
 
 		// UI Rendering =================================
 		ImGui::Render();
@@ -135,49 +117,9 @@ int main() {
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.moveForward(deltaTime);
-		}
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera.moveBack(deltaTime);
-		}
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-			camera.moveLeft(deltaTime);
-		}
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			camera.moveRight(deltaTime);
-		}
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			camera.moveUp(deltaTime);
-		}
-		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-			camera.moveDown(deltaTime);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-			glfwSetWindowShouldClose(window, true);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-			camera.setSprint(true);
-		}
-		else {
-			camera.setSprint(false);
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
-			if (!f1Pressed) {  
-				wireframeMode = !wireframeMode;
-				f1Pressed = true;  
-			}
-		}
-		else {
-			f1Pressed = false;
-		}
-
 	}
 	renderer.clear();
+
 	glfwTerminate();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -188,8 +130,8 @@ int main() {
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 	voxl::Camera* camera = static_cast<voxl::Camera*>(glfwGetWindowUserPointer(window));
 
-	static double lastX = voxl::Camera::width / 2.0;
-	static double lastY = voxl::Camera::height / 2.0;
+	static double lastX = window_width / 2.0;
+	static double lastY = window_height / 2.0;
 	static bool firstMouse = true;
 
 	if (firstMouse) {
