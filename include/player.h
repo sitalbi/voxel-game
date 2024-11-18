@@ -1,9 +1,9 @@
-#ifndef PLAYER_H
-#define PLAYER_H
+#pragma once
 
 #include "camera.h"
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
+#include <chunk_manager.h>
 
 namespace voxl {
 
@@ -14,6 +14,8 @@ namespace voxl {
         void update(float deltaTime);
         void processInput(GLFWwindow* window, float deltaTime);
         void processMouseMovement(double xpos, double ypos);
+
+        bool rayCast(const ChunkManager& chunkManager, float maxDistance, glm::vec3& outBlockPosition) const;
 
         glm::vec3 getPosition() const { return m_position; }
 
@@ -37,4 +39,3 @@ namespace voxl {
 
 } // namespace voxl
 
-#endif

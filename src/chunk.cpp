@@ -99,7 +99,7 @@ void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& no
 
     switch (faceIndex) {
     case 0: // Left face
-        v1 = glm::vec3(x, y, z+1);
+        v1 = glm::vec3(x, y, z + 1);
         v2 = glm::vec3(x, y + 1, z + 1);
         v3 = glm::vec3(x, y + 1,z);
         v4 = glm::vec3(x, y, z);
@@ -168,42 +168,42 @@ bool Chunk::isFaceVisible(int x, int y, int z, int direction)
 {
     if (direction == 0) { // Left face
         if (x == 0) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
             return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None;
         }
         return cubes[x - 1][y][z] == BlockType::None;
     }
     else if (direction == 1) { // Right face
         if (x == CHUNK_SIZE - 1) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y , m_z );
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y , m_z );
             return !neighbor || neighbor->cubes[0][y][z] == BlockType::None;
         }
         return cubes[x + 1][y][z] == BlockType::None;
     }
     else if (direction == 2) { // Bottom face
         if (y == 0) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_SIZE, m_z);
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_SIZE, m_z);
             return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None;
         }
         return cubes[x][y - 1][z] == BlockType::None;
     }
     else if (direction == 3) { // Top face
         if (y == CHUNK_SIZE - 1) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_SIZE, m_z);
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_SIZE, m_z);
             return !neighbor || neighbor->cubes[x][0][z] == BlockType::None;
         }
         return cubes[x][y + 1][z] == BlockType::None;
     }
     else if (direction == 4) { // Back face
         if (z == 0) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
             return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None;
         }
         return cubes[x][y][z - 1] == BlockType::None;
     }
     else if (direction == 5) { // Front face
         if (z == CHUNK_SIZE - 1) {
-            Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
+            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
             return !neighbor || neighbor->cubes[x][y][0] == BlockType::None;
         }
         return cubes[x][y][z + 1] == BlockType::None;

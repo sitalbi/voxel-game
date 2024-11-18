@@ -79,9 +79,8 @@ void ChunkManager::unloadChunks(glm::vec3 playerPosition)
 	}
 }
 
-Chunk* ChunkManager::getChunk(int x, int y, int z)
+const Chunk* ChunkManager::getChunk(int x, int y, int z) const
 {
-	// Convert world coordinates to chunk indices
 	int chunkX = x / Chunk::CHUNK_SIZE;
 	int chunkY = y / Chunk::CHUNK_SIZE;
 	int chunkZ = z / Chunk::CHUNK_SIZE;

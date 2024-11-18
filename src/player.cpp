@@ -1,5 +1,7 @@
 #include "glad/glad.h"
 #include "player.h"
+#include "chunk.h"
+#include <iostream>
 
 namespace voxl {
 
@@ -10,6 +12,7 @@ Player::Player(glm::vec3 position, Camera& camera) : m_position(position), m_cam
 }
 
 void Player::update(float deltaTime) {
+	processInput(glfwGetCurrentContext(), deltaTime);
     if (isSprinting) {
         m_speedMultiplier = 2.0f;
     }
@@ -77,6 +80,38 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
 void Player::processMouseMovement(double xpos, double ypos) {
     m_camera.processMouseMovement(static_cast<float>(xpos), static_cast<float>(ypos));
 }
+
+bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::vec3& outBlockPosition) const
+{
+    glm::vec3 rayOrigin = m_camera.getPosition();
+    glm::vec3 rayDirection = glm::normalize(m_camera.getForward());
+    float step = 0.1f;
+
+    glm::vec3 currentPos;
+    for (float distance = 0.0f; distance < maxDistance; distance += step) {
+        currentPos = rayOrigin + rayDirection * distance;
+
+        // Check if the chunk exists
+        const Chunk* chunk = chunkManager.getChunk(currentPos.x, currentPos.y, currentPos.z);
+        if (chunk == nullptr) {
+            continue;
+        }
+
+        // Get the local block position within the chunk
+        glm::ivec3 blockPos = glm::mod(glm::floor(currentPos), static_cast<float>(Chunk::CHUNK_SIZE));
+
+        // Check if there is a block at this position
+        if (chunk->cubes[blockPos.x][blockPos.y][blockPos.z] != BlockType::None) {
+
+            outBlockPosition = (chunk->getPosition() + glm::vec3(blockPos)) + glm::vec3(0.5f, 0.5f, 0.5f);
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
 
 void Player::updateCamera() {
 	m_camera.setPosition(m_position);

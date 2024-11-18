@@ -30,6 +30,7 @@ Mesh::~Mesh()
 
 void Mesh::generateBuffers()
 {
+    // Generate and bind VAO
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
@@ -40,7 +41,7 @@ void Mesh::generateBuffers()
 
     // Set vertex attribute for position (location 0)
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     // Generate and bind normal buffer
     glGenBuffers(1, &NBO);
@@ -49,15 +50,21 @@ void Mesh::generateBuffers()
 
     // Set vertex attribute for normals (location 1)
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
     // Generate and bind index buffer
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
+
     // Unbind VAO to prevent accidental modification
     glBindVertexArray(0);
 }
+
 
 } // namespace voxl

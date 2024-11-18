@@ -24,7 +24,7 @@ public:
 	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
 	Mesh* getMesh() { return m_mesh; }
-	glm::vec3 getPosition() { return glm::vec3(m_x, m_y, m_z); }
+	glm::vec3 getPosition() const { return glm::vec3(m_x, m_y, m_z); }
 	int getIndexCount() { return m_indexCount; }
 
 	void generate();

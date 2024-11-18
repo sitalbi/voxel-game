@@ -35,7 +35,7 @@ public:
 	void updateChunks(glm::vec3 playerPosition);
 	void unloadChunks(glm::vec3 playerPosition);
 
-	Chunk* getChunk(int x, int y, int z);
+	const Chunk* getChunk(int x, int y, int z) const;
 	std::unordered_map<glm::ivec3, Chunk*> getChunks() const { return m_chunks; }
 
 
