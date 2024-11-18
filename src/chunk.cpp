@@ -31,6 +31,11 @@ Chunk::~Chunk()
     delete m_mesh;
 }
 
+void Chunk::setBlockType(int x, int y, int z, BlockType type)
+{
+	cubes[x][y][z] = type;
+}
+
 void Chunk::generate()
 {
     fnl_state noise = fnlCreateState();

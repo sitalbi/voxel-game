@@ -16,12 +16,12 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 int main() {
 	// Initialization
 	voxl::Renderer renderer;
+	voxl::ChunkManager chunkManager;
 
 	voxl::Camera camera(window_width, window_height, glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 
-	voxl::Player player(glm::vec3(0.0f, 30.0f, 0.0f), camera);
+	voxl::Player player(glm::vec3(0.0f, 30.0f, 0.0f), camera, chunkManager);
 	
-	voxl::ChunkManager chunkManager;
 
 	// Window settings
 	glfwSetCursorPosCallback(renderer.window, mouseCallback);

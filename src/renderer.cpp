@@ -114,11 +114,11 @@ void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos)
 
 void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 {
-	bool blockFound = player.rayCast(chunkManager, 10.0f, this->m_highlightedBlock);
+	bool blockFound = player.blockFound();
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	setupUI(player.getPosition(), this->m_highlightedBlock);
+	setupUI(player.getPosition(), player.getBlockPosition());
 
 	glEnable(GL_DEPTH_TEST);
 	glStencilMask(0x00);
@@ -126,6 +126,7 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 
 
 	if (blockFound) {
+		glm::vec3 blockPosition = player.getBlockPosition();
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -133,14 +134,14 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 		// Enable writing to the stencil buffer
 		glStencilMask(0xFF); 
 
-		renderCube(voxl::BlockType::Grass, this->m_highlightedBlock, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
+		renderCube(voxl::BlockType::Grass, blockPosition, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
 
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF); 
 		glStencilMask(0x00); 
 		glDepthMask(GL_FALSE); 
 		glLineWidth(3);
 
-		renderHighlight(this->m_highlightedBlock, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
+		renderHighlight(blockPosition, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
 
 		glDisable(GL_POLYGON_OFFSET_FILL);
 

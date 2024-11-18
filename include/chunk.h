@@ -27,6 +27,8 @@ public:
 	glm::vec3 getPosition() const { return glm::vec3(m_x, m_y, m_z); }
 	int getIndexCount() { return m_indexCount; }
 
+	void setBlockType(int x, int y, int z, BlockType type);
+
 	void generate();
 	void generateMesh();
 
