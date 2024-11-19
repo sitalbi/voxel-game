@@ -64,14 +64,12 @@ void Renderer::init()
 	// Load crosshair texture
 	m_crosshairTexture = loadTexture(RES_DIR "/textures/gui/crosshair.png");
 
-	m_highlightedBlock = glm::vec3(0.0f, 0.0f, 0.0f);
-
 	m_initialized = true;
 }
 
 void Renderer::generateCubeMesh()
 {
-	m_cubeMesh = new Mesh(g_cubeVertices, g_cubeNormals, g_cubeIndices);
+	m_cubeMesh = new Mesh(g_cubeVertices, g_cubeNormals, g_cubeIndices, std::vector<glm::vec3>());
 }
 
 void Renderer::initUI() const
@@ -88,7 +86,7 @@ void Renderer::initUI() const
 	ImGui_ImplOpenGL3_Init();
 }
 
-void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos)
+void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos = glm::vec3(-10000.0f))
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -101,7 +99,9 @@ void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos)
 	ImGui::Text("App average %.3f ms/frame (%.1f FPS)\n", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("");
 	ImGui::Text("Player position: (%.2f, %.2f, %.2f)", playerPos.x, playerPos.y, playerPos.z);
-	ImGui::Text("Block position: (%.2f, %.2f, %.2f)", blockPos.x, blockPos.y, blockPos.z);
+	if (blockPos.y != -10000.0f) {
+		ImGui::Text("Block position: (%.2f, %.2f, %.2f)", blockPos.x, blockPos.y, blockPos.z);
+	}
 	ImGui::End();
 
 	// Crosshair
@@ -118,8 +118,6 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	setupUI(player.getPosition(), player.getBlockPosition());
-
 	glEnable(GL_DEPTH_TEST);
 	glStencilMask(0x00);
 	renderChunks(chunkManager, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
@@ -127,6 +125,8 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 
 	if (blockFound) {
 		glm::vec3 blockPosition = player.getBlockPosition();
+		setupUI(player.getPosition(), blockPosition);
+
 		glDisable(GL_CULL_FACE);
 		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -134,7 +134,9 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 		// Enable writing to the stencil buffer
 		glStencilMask(0xFF); 
 
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		renderCube(voxl::BlockType::Grass, blockPosition, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF); 
 		glStencilMask(0x00); 
@@ -153,6 +155,9 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 	}
+	else {
+		setupUI(player.getPosition());
+	}
 
 	renderUI();
 
@@ -164,6 +169,7 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 void Renderer::renderCube(BlockType type, glm::vec3 position, glm::mat4 view, glm::mat4 projection)
 {
 	glm::mat4 scaledModel = glm::scale(glm::translate(glm::mat4(1.0f), position), glm::vec3(1.01f, 1.01f, 1.01f));
+	
 	renderMesh(m_cubeMesh, m_defaultShader, scaledModel, view, projection);
 }
 
@@ -201,7 +207,7 @@ void Renderer::renderMesh(Mesh* mesh, Shader* shader, glm::mat4 model, glm::mat4
 	shader->SetUniformMat4f("model", model);
 	shader->SetUniformMat4f("view", view);
 	shader->SetUniformMat4f("projection", projection);
-	
+
 	glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, nullptr); 
 
 	glBindVertexArray(0);

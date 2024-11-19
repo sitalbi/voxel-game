@@ -8,6 +8,7 @@ namespace voxl {
 Player::Player(glm::vec3 position, Camera& camera, ChunkManager& chunkManager) : m_position(position), m_camera(camera), m_chunkManager(chunkManager)
 {
 	m_speed = m_defaultSpeed;
+	m_blockPosition = glm::vec3(0.0f);
 	updateCamera();
 }
 

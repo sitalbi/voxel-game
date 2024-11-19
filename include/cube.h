@@ -9,7 +9,8 @@ namespace voxl {
 		Dirt,
 		Stone,
 		Sand,
-		Wood
+		Wood,
+		Water
 	};
 
 	class Cube {

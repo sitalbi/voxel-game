@@ -15,6 +15,15 @@
 #define window_height 1080
 
 namespace voxl {
+
+    static const std::unordered_map<BlockType, glm::vec3> g_cubeColors = {
+        { BlockType::Grass, glm::vec3(0.25f, 1.0f, 0.25f)},
+        { BlockType::Dirt, glm::vec3(0.5f, 0.35f, 0.05f) },
+        { BlockType::Stone, glm::vec3(0.7f, 0.85f, 0.85f) },
+        { BlockType::Sand, glm::vec3(1.0f, 1.0f, 0.5f) },
+        { BlockType::Wood, glm::vec3(0.5f, 0.35f, 0.05f)} 
+    };
+
     static const std::vector<glm::vec3> g_cubeVertices = {
         // Front face
         glm::vec3(-0.5f, -0.5f,  0.5f), // Vertex 0
@@ -131,7 +140,6 @@ private:
 
 	unsigned int m_crosshairTexture;
 
-	glm::vec3 m_highlightedBlock;
 
 	unsigned int loadTexture(const char* path);
 };

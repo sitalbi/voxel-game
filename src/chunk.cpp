@@ -1,5 +1,6 @@
 #include "chunk.h"
 #include "chunk_manager.h"
+#include "renderer.h"  
 #include "glm/glm.hpp"
 #include <array>
 #include <iostream>
@@ -38,35 +39,71 @@ void Chunk::setBlockType(int x, int y, int z, BlockType type)
 
 void Chunk::generate()
 {
-    fnl_state noise = fnlCreateState();
-    noise.noise_type = FNL_NOISE_PERLIN;
-    noise.frequency = 0.015f;
+    fnl_state heightNoise = fnlCreateState();
+    heightNoise.noise_type = FNL_NOISE_PERLIN;
+    heightNoise.frequency = 0.017f;
+
+    fnl_state biomeNoise = fnlCreateState();
+	biomeNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    biomeNoise.frequency = 0.001f;
 
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
         for (int z = 0; z < CHUNK_SIZE; z++)
         {
-            float noiseValue = fnlGetNoise2D(&noise, m_x + x, m_z + z);
-            int maxHeight = static_cast<int>((noiseValue + 1.0f) * (CHUNK_SIZE / 2)); 
+			BiomeType biome = getBiomeType(biomeNoise, m_x + x, m_z + z);
+
+            // Calculate height using height noise
+            float noiseValue = fnlGetNoise2D(&heightNoise, m_x + x, m_z + z);
+            int maxHeight = static_cast<int>((noiseValue + 1.0f) * (CHUNK_SIZE / 2));
 
             for (int y = 0; y < CHUNK_SIZE; y++)
             {
                 BlockType type = BlockType::None;
 
-                if (y < maxHeight) 
+                if (y < maxHeight)
                 {
-                    if (y < maxHeight - 2) {
-                        type = BlockType::Stone;
-                    }
-                    else if (y == maxHeight - 1) {
-                        type = BlockType::Grass;
-                    }
-                    else {
-                        type = BlockType::Dirt;
+                    // Assign block types based on biome and height
+                    switch (biome)
+                    {
+                    case BiomeType::Desert:
+                        if (y < maxHeight - 3) {
+                            type = BlockType::Stone;
+                        }
+                        else {
+                            type = BlockType::Sand;
+                        }
+                        break;
+
+                    case BiomeType::Plains:
+                        if (y < maxHeight - 5) {
+                            type = BlockType::Stone;
+                        }
+                        else if (y < maxHeight - 1) {
+                            type = BlockType::Dirt;
+                        }
+                        else if (y >= 20) {
+							type = BlockType::Stone;
+						}
+                        else {
+                            type = BlockType::Grass;
+                        }
+                        break;
+
+                    case BiomeType::Forest:
+                        if (y < maxHeight - 5) {
+                            type = BlockType::Stone;
+                        }
+                        else if (y < maxHeight - 1) {
+                            type = BlockType::Dirt;
+                        }
+                        else {
+                            type = BlockType::Grass;
+                        }
+                        break;
                     }
                 }
 
-                // Create the cube with the assigned type at (x, y, z)
                 cubes[x][y][z] = type;
             }
         }
@@ -74,10 +111,12 @@ void Chunk::generate()
 }
 
 
+
 void Chunk::generateMesh() {
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
     std::vector<uint32_t> indices;
+    std::vector<glm::vec3> colors;
 
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
@@ -85,6 +124,10 @@ void Chunk::generateMesh() {
                 if (cubes[x][y][z] != BlockType::None) {
                     for (int direction = 0; direction < 6; direction++) {
                         if (isFaceVisible(x, y, z, direction)) {
+							colors.push_back(g_cubeColors.at(cubes[x][y][z]));
+                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
+                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
+                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
                             addFace(vertices, normals, indices, x, y, z, direction);
                         }
                     }
@@ -94,7 +137,7 @@ void Chunk::generateMesh() {
     }
 
     // Create the actual mesh
-    m_mesh = new Mesh(vertices, normals, indices);
+    m_mesh = new Mesh(vertices, normals, indices, colors);
 }
 
 void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices,
@@ -167,6 +210,23 @@ void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& no
     indices.push_back(baseIndex + 3);
     indices.push_back(baseIndex);
 }
+
+BiomeType Chunk::getBiomeType(fnl_state& noise, int x, int z) const
+{
+    // Simple example of determining biome based on noise value.
+    float biomeNoise = fnlGetNoise2D(&noise, m_x + x, m_z + z);
+
+    if (biomeNoise < -0.3f) {
+        return BiomeType::Desert;
+    }
+    else if (biomeNoise < 0.3f) {
+        return BiomeType::Plains;
+    }
+    else {
+        return BiomeType::Forest;
+    }
+}
+
 
 
 bool Chunk::isFaceVisible(int x, int y, int z, int direction)

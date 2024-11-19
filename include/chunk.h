@@ -6,10 +6,19 @@
 
 #include "glad/glad.h"
 
+struct fnl_state;
+
 namespace voxl
 {
 
 class ChunkManager;
+
+enum class BiomeType {
+	Forest = 0, 
+	Plains, 
+	Desert,
+	Mountains
+};
 
 class Chunk {
 
@@ -44,6 +53,8 @@ private:
 
 	void addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<unsigned int>& indices,
 				int x, int y, int z, int faceIndex);
+
+	BiomeType getBiomeType(fnl_state& noise, int x, int z) const;
 };
 
 } // namespace voxl
