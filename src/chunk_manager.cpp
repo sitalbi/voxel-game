@@ -23,18 +23,32 @@ void ChunkManager::loadChunks(glm::vec3 playerPosition)
 	int playerChunkX = static_cast<int>(playerPosition.x) / Chunk::CHUNK_SIZE;
 	int playerChunkZ = static_cast<int>(playerPosition.z) / Chunk::CHUNK_SIZE;
 
+
 	for (int x = playerChunkX - ChunkManager::LOAD_RADIUS; x < playerChunkX + ChunkManager::LOAD_RADIUS; x++)
 	{
 		for (int z = playerChunkZ - ChunkManager::LOAD_RADIUS; z < playerChunkZ + ChunkManager::LOAD_RADIUS; z++)
 		{
 			glm::ivec3 chunkPos(x, 0, z);
-
-			if (m_chunks.find(chunkPos) == m_chunks.end())
-			{
+			if (m_chunks.find(chunkPos) == m_chunks.end()) {
+				std::cout << "Loading new chunk at: (" << x << ", 0, " << z << ")" << std::endl;
 				Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE, this);
 				chunk->generate();
 				m_chunks[chunkPos] = chunk;
 				m_updateList.insert(chunkPos);
+
+				// Update neighboring chunks
+				std::vector<glm::ivec3> neighbors = {
+					glm::ivec3(x - 1, 0, z),
+					glm::ivec3(x + 1, 0, z),
+					glm::ivec3(x, 0, z - 1),
+					glm::ivec3(x, 0, z + 1)
+				};
+
+				for (const auto& neighborPos : neighbors) {
+					if (m_chunks.find(neighborPos) != m_chunks.end()) {
+						m_updateList.insert(neighborPos);
+					}
+				}
 			}
 		}
 	}
@@ -91,11 +105,12 @@ Chunk* ChunkManager::getChunk(int x, int y, int z) const
 
 	glm::ivec3 chunkPos(chunkX, chunkY, chunkZ);
 	auto it = m_chunks.find(chunkPos);
-	if (it != m_chunks.end())
-	{
+	if (it != m_chunks.end()) {
 		return it->second;
 	}
 	return nullptr;
 }
+
+
 
 } // namespace voxl

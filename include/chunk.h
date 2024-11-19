@@ -10,7 +10,6 @@ struct fnl_state;
 
 namespace voxl
 {
-
 class ChunkManager;
 
 enum class BiomeType {

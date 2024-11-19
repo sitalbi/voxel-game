@@ -10,10 +10,7 @@ namespace std {
 	{
 		std::size_t operator()(const glm::ivec3& k) const
 		{
-			using std::size_t;
-			using std::hash;
-
-			return ((hash<int>()(k.x) ^ (hash<int>()(k.y) << 1)) >> 1) ^ (hash<int>()(k.z) << 1);
+			return std::hash<int>()(k.x) ^ std::hash<int>()(k.y) ^ std::hash<int>()(k.z);
 		}
 	};
 } // namespace std
@@ -21,12 +18,14 @@ namespace std {
 namespace voxl
 {
 
+
+
 class Chunk;
 
 class ChunkManager
 {
 public:
-	static const int LOAD_RADIUS = 12;
+	static const int LOAD_RADIUS = 8;
 
 	ChunkManager();
 	~ChunkManager();
