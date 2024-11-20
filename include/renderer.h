@@ -22,7 +22,9 @@ namespace voxl {
         { BlockType::Dirt, glm::vec3(0.5f, 0.35f, 0.05f) },
         { BlockType::Stone, glm::vec3(0.7f, 0.85f, 0.85f) },
         { BlockType::Sand, glm::vec3(1.0f, 1.0f, 0.5f) },
-        { BlockType::Wood, glm::vec3(0.5f, 0.35f, 0.05f)} 
+        { BlockType::Wood, glm::vec3(0.83f, 0.69f, 0.415f)},
+		{ BlockType::Water, glm::vec3(0.0f, 0.0f, 1.0f) },
+		{ BlockType::Leaves, glm::vec3(0.4f, 1.0f, 0.05f) }
     };
 
     static const std::vector<glm::vec3> g_cubeVertices = {
@@ -113,9 +115,9 @@ public:
 	void generateCubeMesh();
 	void initUI() const;
 
-	void setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos);
+	void setupUI(Player& player, const glm::vec3& blockPos);
 
-    void update(const Player& player, const ChunkManager& chunkManager);
+    void update(Player& player, const ChunkManager& chunkManager);
 
 	void renderCube(BlockType type, glm::vec3 position, glm::mat4 view, glm::mat4 projection);
 	void renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection);

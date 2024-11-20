@@ -25,7 +25,7 @@ class Chunk;
 class ChunkManager
 {
 public:
-	static const int LOAD_RADIUS = 8;
+	static const int LOAD_RADIUS = 12;
 
 	ChunkManager();
 	~ChunkManager();

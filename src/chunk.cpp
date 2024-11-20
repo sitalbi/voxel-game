@@ -104,7 +104,21 @@ void Chunk::generate()
                     }
                 }
 
+
+
                 cubes[x][y][z] = type;
+            }
+            // Place trees on top of grass blocks for suitable biomes (Forest and Plains)
+            if (biome == BiomeType::Forest || biome == BiomeType::Plains)
+            {
+                // Trees are more likely to spawn in Forest biomes
+                float treeProbability = (biome == BiomeType::Forest) ? 0.05f : 0.005f;
+
+                // Randomly decide if a tree should be placed at this location
+                if (static_cast<float>(rand()) / RAND_MAX < treeProbability)
+                {
+                    placeTree(x, maxHeight, z);
+                }
             }
         }
     }
@@ -224,6 +238,45 @@ BiomeType Chunk::getBiomeType(fnl_state& noise, int x, int z) const
     }
     else {
         return BiomeType::Forest;
+    }
+}
+
+void Chunk::placeTree(int x, int y, int z)
+{
+    int trunkHeight = rand() % 4 + 3; ; 
+    int treeTopHeight = y + trunkHeight;
+
+    // Place trunk blocks
+    for (int h = y; h < treeTopHeight && h < CHUNK_SIZE; h++)
+    {
+        cubes[x][h][z] = BlockType::Wood;
+    }
+
+    // Place leaves
+    int leafStart = treeTopHeight - 2; // Leaves start 2 blocks below the top of the trunk
+    for (int lx = -2; lx <= 2; lx++)
+    {
+        for (int lz = -2; lz <= 2; lz++)
+        {
+            for (int ly = 0; ly <= 2; ly++)
+            {
+                int leafX = x + lx;
+                int leafY = leafStart + ly;
+                int leafZ = z + lz;
+
+                // Make sure leaves are within bounds of the chunk
+                if (leafX >= 0 && leafX < CHUNK_SIZE &&
+                    leafY >= 0 && leafY < CHUNK_SIZE &&
+                    leafZ >= 0 && leafZ < CHUNK_SIZE)
+                {
+                    // Don't fill the very center with leaves (trunk goes there)
+                    if (!(lx == 0 && lz == 0 && ly == 0))
+                    {
+                        cubes[leafX][leafY][leafZ] = BlockType::Leaves;
+                    }
+                }
+            }
+        }
     }
 }
 

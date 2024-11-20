@@ -71,7 +71,7 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                     glm::ivec3 localBlockPos = glm::mod(glm::floor(newBlockPosition), static_cast<float>(Chunk::CHUNK_SIZE));
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
                         localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_SIZE && localBlockPos.z < Chunk::CHUNK_SIZE) {
-                        chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::Grass);
+                        chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, getSelectedBlock());
                         chunk->generateMesh();
                     }
                 }
@@ -103,6 +103,8 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
     else {
         mouseRightClicked = false;
     }
+	
+
 
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
         if (!f1Pressed) {
@@ -176,6 +178,22 @@ bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::v
 
 
 
+
+void Player::handle_scroll(double xoffset, double yoffset)
+{
+    if (yoffset < 0) {
+		m_selectedBlock++;
+		if (m_selectedBlock >= blockTypes.size()) {
+			m_selectedBlock = 0;
+		}
+	}
+    if (yoffset > 0) {
+		m_selectedBlock--;
+		if (m_selectedBlock < 0) {
+			m_selectedBlock = blockTypes.size() - 1;
+		}
+	}
+}
 
 void Player::updateCamera() {
 	m_camera.setPosition(m_position);

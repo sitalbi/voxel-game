@@ -26,7 +26,10 @@ int main() {
 	// Window settings
 	glfwSetCursorPosCallback(renderer.window, mouseCallback);
 	glfwSetInputMode(renderer.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetWindowUserPointer(renderer.window, &camera);
+	voxl::WindowContext context = { &camera, &player };
+	glfwSetWindowUserPointer(renderer.window, &context);
+
+	glfwSetScrollCallback(renderer.window, player.scroll_callback);
 
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
@@ -53,7 +56,8 @@ int main() {
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
-	voxl::Camera* camera = static_cast<voxl::Camera*>(glfwGetWindowUserPointer(window));
+	voxl::WindowContext* context = static_cast<voxl::WindowContext*>(glfwGetWindowUserPointer(window));
+	voxl::Camera* camera = context->camera;
 
 	static double lastX = window_width / 2.0;
 	static double lastY = window_height / 2.0;

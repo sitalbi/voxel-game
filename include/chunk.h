@@ -54,6 +54,8 @@ private:
 				int x, int y, int z, int faceIndex);
 
 	BiomeType getBiomeType(fnl_state& noise, int x, int z) const;
+
+	void placeTree(int x, int y, int z);
 };
 
 } // namespace voxl

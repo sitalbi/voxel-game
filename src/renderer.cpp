@@ -90,12 +90,15 @@ void Renderer::initUI() const
 	ImGui_ImplOpenGL3_Init();
 }
 
-void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos = glm::vec3(-10000.0f))
+void Renderer::setupUI(Player& player, const glm::vec3& blockPos = glm::vec3(-10000.0f))
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	glm::vec3 playerPos = player.getPosition();
+
+	// Information Panel
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_Always);
 
@@ -114,9 +117,52 @@ void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos = g
 	ImGui::Begin("Crosshair", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs);
 	ImGui::Image((void*)(intptr_t)m_crosshairTexture, ImVec2(20, 20));
 	ImGui::End();
+
+	// Inventory Bar
+	ImGui::SetNextWindowPos(ImVec2(window_width / 2.0f - 150, window_height - 80), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(300, 70), ImGuiCond_Always);
+
+	ImGui::Begin("Inventory", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+
+	// Use tables instead of deprecated columns
+	if (ImGui::BeginTable("InventoryTable", player.blockTypes.size(), ImGuiTableFlags_SizingFixedFit)) {
+
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		ImVec2 windowPos = ImGui::GetWindowPos();
+
+		for (int i = 0; i < player.blockTypes.size(); ++i) {
+			ImGui::TableNextColumn();  // Advance to the next column
+
+			ImGui::PushID(i);
+
+			// Calculate position and size of each button
+			ImVec2 buttonPos = ImGui::GetCursorScreenPos();
+			ImVec2 buttonSize = ImVec2(50, 50);
+			ImVec2 buttonEnd = ImVec2(buttonPos.x + buttonSize.x, buttonPos.y + buttonSize.y);
+
+			if (player.getSelectedBlock() == player.blockTypes[i]) {
+				ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, IM_COL32(255, 255, 255, 255));
+			}
+			draw_list->AddRect(buttonPos, buttonEnd, IM_COL32(0, 0, 0, 255), 0.0f, 0, 3.0f);
+
+			ImVec4 color = ImVec4(g_cubeColors.at(player.blockTypes[i]).r, g_cubeColors.at(player.blockTypes[i]).g, g_cubeColors.at(player.blockTypes[i]).b, 1.0f);
+			ImGui::PushStyleColor(ImGuiCol_Button, color);
+			ImGui::Button("", buttonSize);
+			ImGui::PopStyleColor();
+
+			ImGui::PopID();
+		}
+
+		ImGui::EndTable();  // End the table
+	}
+
+	ImGui::End();
+
 }
 
-void Renderer::update(const Player& player, const ChunkManager& chunkManager)
+
+
+void Renderer::update(Player& player, const ChunkManager& chunkManager)
 {
 	bool blockFound = player.blockFound();
 	glClearColor(0.0f, 0.7f, 1.0f, 1.0f);
@@ -132,7 +178,7 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 
 	if (blockFound) {
 		glm::vec3 blockPosition = player.getBlockPosition();
-		setupUI(player.getPosition(), blockPosition);
+		setupUI(player, blockPosition);
 
 		glDisable(GL_CULL_FACE);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -162,7 +208,7 @@ void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 		glCullFace(GL_BACK);
 	}
 	else {
-		setupUI(player.getPosition());
+		setupUI(player);
 	}
 
 	renderUI();
@@ -256,6 +302,7 @@ void Renderer::renderSkyBox(glm::mat4 view, glm::mat4 projection)
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 }
+
 
 unsigned int Renderer::loadTexture(const char* path)
 {
