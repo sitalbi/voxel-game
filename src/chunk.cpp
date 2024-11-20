@@ -25,6 +25,16 @@ Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 	m_z = z;
 	m_chunkManager = chunkManager;
 	m_mesh = nullptr;
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int y = 0; y < CHUNK_SIZE; y++)
+        {
+            for (int z = 0; z < CHUNK_SIZE; z++)
+            {
+                cubes[x][y][z] = BlockType::None;
+            }
+        }
+    }
 }
 
 Chunk::~Chunk()
@@ -102,23 +112,27 @@ void Chunk::generate()
                         }
                         break;
                     }
+                    if (cubes[x][y][z] == BlockType::None)
+                    {
+                        cubes[x][y][z] = type;
+                    }
                 }
 
-
-
-                cubes[x][y][z] = type;
+                
             }
-            // Place trees on top of grass blocks for suitable biomes (Forest and Plains)
+
+            // Place trees on top of grass blocks for suitable biomes 
             if (biome == BiomeType::Forest || biome == BiomeType::Plains)
             {
-                // Trees are more likely to spawn in Forest biomes
-                float treeProbability = (biome == BiomeType::Forest) ? 0.05f : 0.005f;
+                float treeProbability = (biome == BiomeType::Forest) ? 0.0035f : 0.001f;
 
-                // Randomly decide if a tree should be placed at this location
-                if (static_cast<float>(rand()) / RAND_MAX < treeProbability)
-                {
-                    placeTree(x, maxHeight, z);
-                }
+				if (cubes[x][maxHeight-1][z] == BlockType::Grass)
+				{
+					if (static_cast<float>(rand()) / RAND_MAX < treeProbability)
+					{
+						placeTree(x, maxHeight, z);
+					}
+				}
             }
         }
     }
@@ -253,7 +267,7 @@ void Chunk::placeTree(int x, int y, int z)
     }
 
     // Place leaves
-    int leafStart = treeTopHeight - 2; // Leaves start 2 blocks below the top of the trunk
+    int leafStart = treeTopHeight - 2; 
     for (int lx = -2; lx <= 2; lx++)
     {
         for (int lz = -2; lz <= 2; lz++)
@@ -269,11 +283,7 @@ void Chunk::placeTree(int x, int y, int z)
                     leafY >= 0 && leafY < CHUNK_SIZE &&
                     leafZ >= 0 && leafZ < CHUNK_SIZE)
                 {
-                    // Don't fill the very center with leaves (trunk goes there)
-                    if (!(lx == 0 && lz == 0 && ly == 0))
-                    {
-                        cubes[leafX][leafY][leafZ] = BlockType::Leaves;
-                    }
+                    cubes[leafX][leafY][leafZ] = BlockType::Leaves;
                 }
             }
         }
