@@ -29,26 +29,31 @@ void ChunkManager::loadChunks(glm::vec3 playerPosition)
 		for (int z = playerChunkZ - ChunkManager::LOAD_RADIUS; z < playerChunkZ + ChunkManager::LOAD_RADIUS; z++)
 		{
 			glm::ivec3 chunkPos(x, 0, z);
-			if (m_chunks.find(chunkPos) == m_chunks.end()) {
-				std::cout << "Loading new chunk at: (" << x << ", 0, " << z << ")" << std::endl;
-				Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE, this);
-				chunk->generate();
-				m_chunks[chunkPos] = chunk;
-				m_updateList.insert(chunkPos);
+			if (m_chunksCache.find(chunkPos) == m_chunksCache.end()) {
+				if (m_chunks.find(chunkPos) == m_chunks.end()) {
+					Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE, this);
+					chunk->generate();
+					m_chunks[chunkPos] = chunk;
+					m_chunksCache[chunkPos] = chunk;
+					m_updateList.insert(chunkPos);
 
-				// Update neighboring chunks
-				std::vector<glm::ivec3> neighbors = {
-					glm::ivec3(x - 1, 0, z),
-					glm::ivec3(x + 1, 0, z),
-					glm::ivec3(x, 0, z - 1),
-					glm::ivec3(x, 0, z + 1)
-				};
+					// Update neighboring chunks
+					std::vector<glm::ivec3> neighbors = {
+						glm::ivec3(x - 1, 0, z),
+						glm::ivec3(x + 1, 0, z),
+						glm::ivec3(x, 0, z - 1),
+						glm::ivec3(x, 0, z + 1)
+					};
 
-				for (const auto& neighborPos : neighbors) {
-					if (m_chunks.find(neighborPos) != m_chunks.end()) {
-						m_updateList.insert(neighborPos);
+					for (const auto& neighborPos : neighbors) {
+						if (m_chunks.find(neighborPos) != m_chunks.end()) {
+							m_updateList.insert(neighborPos);
+						}
 					}
 				}
+			}
+			else {
+				m_chunks[chunkPos] = m_chunksCache[chunkPos];
 			}
 		}
 	}
@@ -88,7 +93,6 @@ void ChunkManager::unloadChunks(glm::vec3 playerPosition)
 	}
 	for (auto& chunk : chunksToRemove)
 	{
-		delete m_chunks[chunk];
 		m_chunks.erase(chunk);
 	}
 }

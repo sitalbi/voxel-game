@@ -14,16 +14,6 @@ Camera::Camera(int width, int height, glm::vec3 up, float yaw, float pitch)
 	updateCameraVectors();
 }
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-{
-	m_position = position;
-	m_worldUp = up;
-	m_yaw = yaw;
-	m_pitch = pitch;
-
-	updateCameraVectors();
-}
-
 
 glm::mat4 Camera::getViewMatrix() const
 {

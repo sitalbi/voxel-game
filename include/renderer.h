@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "cube.h"
 #include "mesh.h"
+#include "skybox.h"
 #include <player.h>
 #include <chunk_manager.h>
 #include <chunk.h>
@@ -136,10 +137,15 @@ private:
 	Mesh* m_cubeMesh;
     Shader* m_defaultShader;
     Shader* m_highlightShader;
+	Shader* m_skyboxShader;
+
+	std::unique_ptr<Skybox> m_skybox;
+
     bool m_initialized;
 
 	unsigned int m_crosshairTexture;
 
+	void renderSkyBox(glm::mat4 view, glm::mat4 projection);
 
 	unsigned int loadTexture(const char* path);
 };

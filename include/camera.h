@@ -8,7 +8,6 @@ namespace voxl {
 class Camera {
 public:
 	Camera(int width, int height, glm::vec3 up, float yaw, float pitch);
-	Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch);
 
 	glm::mat4 getViewMatrix() const;
 	glm::mat4 getProjectionMatrix() const;
@@ -37,7 +36,7 @@ private:
 	float m_yaw;
 	float m_pitch;
 
-	float m_farClippingPlane = 700.0f;
+	float m_farClippingPlane = 500.0f;
 	float m_nearClippingPlane = 0.1f;
 };
 

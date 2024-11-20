@@ -19,6 +19,7 @@ Renderer::~Renderer()
 {
 	delete m_defaultShader;
 	delete m_highlightShader;
+	delete m_skyboxShader;
 	delete m_cubeMesh;
 	glfwDestroyWindow(window);
 }
@@ -50,6 +51,7 @@ void Renderer::init()
 
 	m_defaultShader = new Shader(RES_DIR "/shaders/default_vert.glsl", RES_DIR "/shaders/default_frag.glsl");
 	m_highlightShader = new Shader(RES_DIR "/shaders/highlight_vert.glsl", RES_DIR "/shaders/highlight_frag.glsl");
+	m_skyboxShader = new Shader(RES_DIR "/shaders/skybox_vert.glsl", RES_DIR "/shaders/skybox_frag.glsl");
 	generateCubeMesh();
 
 	// OpenGL settings
@@ -63,6 +65,8 @@ void Renderer::init()
 
 	// Load crosshair texture
 	m_crosshairTexture = loadTexture(RES_DIR "/textures/gui/crosshair.png");
+
+	m_skybox = std::make_unique<Skybox>();
 
 	m_initialized = true;
 }
@@ -115,20 +119,22 @@ void Renderer::setupUI(const glm::vec3& playerPos, const glm::vec3& blockPos = g
 void Renderer::update(const Player& player, const ChunkManager& chunkManager)
 {
 	bool blockFound = player.blockFound();
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.0f, 0.7f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
+	/*glDepthFunc(GL_LEQUAL);
+	renderSkyBox(player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
+	glDepthFunc(GL_LESS);*/
+
 	glStencilMask(0x00);
 	renderChunks(chunkManager, player.getCamera().getViewMatrix(), player.getCamera().getProjectionMatrix());
-
 
 	if (blockFound) {
 		glm::vec3 blockPosition = player.getBlockPosition();
 		setupUI(player.getPosition(), blockPosition);
 
 		glDisable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);
 		// Enable writing to the stencil buffer
@@ -231,6 +237,24 @@ void Renderer::clear()
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
+}
+
+
+void Renderer::renderSkyBox(glm::mat4 view, glm::mat4 projection)
+{
+	view = glm::mat4(glm::mat3(view));
+
+	m_skyboxShader->Bind();
+	m_skyboxShader->SetUniformMat4f("view", view);
+	m_skyboxShader->SetUniformMat4f("projection", projection);
+
+	glBindVertexArray(m_skybox.get()->getVAO());
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_skybox.get()->getTextureID());
+	m_skyboxShader->SetUniform1i("u_skybox", 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
 }
 
 unsigned int Renderer::loadTexture(const char* path)

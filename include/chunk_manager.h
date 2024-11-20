@@ -44,5 +44,7 @@ private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;
 
 	std::unordered_set<glm::ivec3> m_updateList;
+
+	std::unordered_map<glm::ivec3, Chunk*> m_chunksCache;
 };
 } // namespace voxl
