@@ -45,6 +45,9 @@ void Renderer::init()
 
 	initUI();
 
+	// Load crosshair texture
+	m_crosshairTexture = loadTexture(RES_DIR "/textures/gui/crosshair.png");
+
 	m_defaultShader = std::make_unique<Shader>(RES_DIR "/shaders/default_vert.glsl", RES_DIR "/shaders/default_frag.glsl");
 	m_highlightShader = std::make_unique<Shader>(RES_DIR "/shaders/highlight_vert.glsl", RES_DIR "/shaders/highlight_frag.glsl");
 	generateCubeMesh();
@@ -58,15 +61,16 @@ void Renderer::init()
 
 	glEnable(GL_STENCIL_TEST);
 
-	// Load crosshair texture
-	m_crosshairTexture = loadTexture(RES_DIR "/textures/gui/crosshair.png");
+	// Enable blending for transparency
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	m_initialized = true;
 }
 
 void Renderer::generateCubeMesh()
 {
-	m_cubeMesh = std::make_unique<Mesh>(g_cubeVertices, g_cubeNormals, g_cubeIndices, std::vector<glm::vec3>());
+	m_cubeMesh = std::make_unique<Mesh>(g_cubeVertices, g_cubeNormals, g_cubeIndices, std::vector<glm::vec4>());
 }
 
 void Renderer::initUI() const
@@ -215,17 +219,30 @@ void Renderer::renderCube(BlockType type, glm::vec3 position, glm::mat4 view, gl
 }
 
 
-void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
+void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection, bool transparent)
 {	
-	renderMesh(*chunk.getMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0),chunk.getPosition()), view, projection);
+	if (transparent) {
+		if (chunk.getWaterMesh()) {
+			renderMesh(*chunk.getWaterMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0), chunk.getPosition()), view, projection);
+		}
+	}
+	else {
+		renderMesh(*chunk.getMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0), chunk.getPosition()), view, projection);
+	}
 }
 
 void Renderer::renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection)
 {
-	for (auto& chunk : chunkManager.getChunks())
-	{
-		renderChunk(*chunk.second, view, projection);
+	for (auto& chunk : chunkManager.getChunks()) {
+		renderChunk(*chunk.second, view, projection, false); // Render opaque
 	}
+
+	// Render transparent objects
+	glDepthMask(GL_FALSE); // Disable depth writing for transparency
+	for (auto& chunk : chunkManager.getChunks()) {
+		renderChunk(*chunk.second, view, projection, true); // Render transparent
+	}
+	glDepthMask(GL_TRUE); // Re-enable depth writing
 }
 
 void Renderer::renderHighlight(glm::vec3 block, glm::mat4 view, glm::mat4 projection)

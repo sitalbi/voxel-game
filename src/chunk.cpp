@@ -30,7 +30,7 @@ Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 	m_chunkManager = chunkManager;
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
-        for (int y = 0; y < CHUNK_SIZE; y++)
+        for (int y = 0; y < CHUNK_HEIGHT; y++)
         {
             for (int z = 0; z < CHUNK_SIZE; z++)
             {
@@ -51,40 +51,60 @@ void Chunk::setBlockType(int x, int y, int z, BlockType type)
 
 void Chunk::generate()
 {
-    fnl_state heightNoise = fnlCreateState();
-    heightNoise.noise_type = FNL_NOISE_PERLIN;
-    heightNoise.frequency = 0.017f;
+    const int WATER_HEIGHT = 10; 
 
+    // Create and configure biome noise
     fnl_state biomeNoise = fnlCreateState();
-	biomeNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
-    biomeNoise.frequency = 0.001f;
+    biomeNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    biomeNoise.frequency = 0.0005f;
 
-    for (int x = 0; x < CHUNK_SIZE; x++)
-    {
-        for (int z = 0; z < CHUNK_SIZE; z++)
-        {
-			BiomeType biome = getBiomeType(biomeNoise, m_x + x, m_z + z);
+    // Precompute biomes for the chunk
+    BiomeType biomeMap[CHUNK_SIZE][CHUNK_SIZE];
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            biomeMap[x][z] = getBiomeType(biomeNoise, m_x + x, m_z + z);
+        }
+    }
 
-            // Calculate height using height noise
+    // Create noise configurations for each biome
+    std::unordered_map<BiomeType, fnl_state> biomeNoiseConfigs;
+
+    fnl_state desertNoise = fnlCreateState();
+    desertNoise.noise_type = FNL_NOISE_PERLIN;
+    desertNoise.frequency = 0.02f; 
+    biomeNoiseConfigs[BiomeType::Desert] = desertNoise;
+
+    fnl_state forestNoise = fnlCreateState();
+    forestNoise.noise_type = FNL_NOISE_PERLIN;
+    forestNoise.frequency = 0.01f; 
+    biomeNoiseConfigs[BiomeType::Forest] = forestNoise;
+
+    fnl_state plainsNoise = fnlCreateState();
+    plainsNoise.noise_type = FNL_NOISE_PERLIN;
+    plainsNoise.frequency = 0.03f; 
+    biomeNoiseConfigs[BiomeType::Plains] = plainsNoise;
+
+    fnl_state mountainsNoise = fnlCreateState();
+    mountainsNoise.noise_type = FNL_NOISE_PERLIN;
+    mountainsNoise.frequency = 0.05f; 
+    biomeNoiseConfigs[BiomeType::Mountains] = mountainsNoise;
+
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            BiomeType biome = biomeMap[x][z];
+
+            // Use biome-specific noise to calculate height
+            fnl_state& heightNoise = biomeNoiseConfigs[biome];
             float noiseValue = fnlGetNoise2D(&heightNoise, m_x + x, m_z + z);
             int maxHeight = static_cast<int>((noiseValue + 1.0f) * (CHUNK_SIZE / 2));
 
-            for (int y = 0; y < CHUNK_SIZE; y++)
-            {
+            for (int y = 0; y < CHUNK_HEIGHT; y++) {
                 BlockType type = BlockType::None;
 
-                if (y < maxHeight)
-                {
-                    // Assign block types based on biome and height
-                    switch (biome)
-                    {
+                if (y < maxHeight) {
+                    switch (biome) {
                     case BiomeType::Desert:
-                        if (y < maxHeight - 3) {
-                            type = BlockType::Stone;
-                        }
-                        else {
-                            type = BlockType::Sand;
-                        }
+                        type = (y < maxHeight - 3) ? BlockType::Stone : BlockType::Sand;
                         break;
 
                     case BiomeType::Plains:
@@ -94,9 +114,6 @@ void Chunk::generate()
                         else if (y < maxHeight - 1) {
                             type = BlockType::Dirt;
                         }
-                        else if (y >= 20) {
-							type = BlockType::Stone;
-						}
                         else {
                             type = BlockType::Grass;
                         }
@@ -113,28 +130,40 @@ void Chunk::generate()
                             type = BlockType::Grass;
                         }
                         break;
-                    }
-                    if (cubes[x][y][z] == BlockType::None)
-                    {
-                        cubes[x][y][z] = type;
-                    }
-                }
 
-                
+                    case BiomeType::Mountains:
+                        if (y >= 20) {
+                            type = BlockType::Stone;
+                        }
+                        else if (y < maxHeight - 3) {
+                            type = BlockType::Dirt;
+                        }
+                        else {
+                            type = BlockType::Grass;
+                            break;
+                        }
+                    }
+                    cubes[x][y][z] = type;
+                }
             }
 
-            // Place trees on top of grass blocks for suitable biomes 
-            if (biome == BiomeType::Forest || biome == BiomeType::Plains)
-            {
-                float treeProbability = (biome == BiomeType::Forest) ? 0.0035f : 0.001f;
-
-				if (cubes[x][maxHeight-1][z] == BlockType::Grass)
-				{
-					if (static_cast<float>(rand()) / RAND_MAX < treeProbability)
-					{
-						placeTree(x, maxHeight, z);
+            // Add water blocks at a minimum height
+			if ((biome == BiomeType::Forest || biome == BiomeType::Plains) && maxHeight < WATER_HEIGHT)
+			{
+				for (int y = maxHeight; y < WATER_HEIGHT; y++) {
+					if (cubes[x][y][z] == BlockType::None) {
+						cubes[x][y][z] = BlockType::Water;
 					}
 				}
+			}
+
+            // Place trees for suitable biomes
+            if ((biome == BiomeType::Forest || biome == BiomeType::Plains) &&
+                cubes[x][maxHeight - 1][z] == BlockType::Grass && cubes[x][maxHeight][z] == BlockType::None) {
+                float treeProbability = (biome == BiomeType::Forest) ? 0.0035f : 0.001f;
+                if (static_cast<float>(rand()) / RAND_MAX < treeProbability) {
+                    placeTree(x, maxHeight, z);
+                }
             }
         }
     }
@@ -142,23 +171,41 @@ void Chunk::generate()
 
 
 
+
+
 void Chunk::generateMesh() {
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
     std::vector<uint32_t> indices;
-    std::vector<glm::vec3> colors;
+    std::vector<glm::vec4> colors;
+
+	std::vector<glm::vec3> waterVertices;
+	std::vector<glm::vec3> waterNormals;
+	std::vector<uint32_t> waterIndices;
+	std::vector<glm::vec4> waterColors;
 
     for (int x = 0; x < CHUNK_SIZE; x++) {
-        for (int y = 0; y < CHUNK_SIZE; y++) {
+        for (int y = 0; y < CHUNK_HEIGHT; y++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 if (cubes[x][y][z] != BlockType::None) {
                     for (int direction = 0; direction < 6; direction++) {
-                        if (isFaceVisible(x, y, z, direction)) {
-							colors.push_back(g_cubeColors.at(cubes[x][y][z]));
-                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
-                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
-                            colors.push_back(g_cubeColors.at(cubes[x][y][z]));
-                            addFace(vertices, normals, indices, x, y, z, direction);
+                        if (isFaceVisible(x, y, z, direction, cubes[x][y][z])) {
+							if (cubes[x][y][z] == BlockType::Water)
+							{
+								waterColors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 0.5f));
+								waterColors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 0.5f));
+								waterColors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 0.5f));
+								waterColors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 0.5f));
+								addFace(waterVertices, waterNormals, waterIndices, x, y, z, direction);
+							}
+							else
+							{
+								colors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 1.0f));
+								colors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 1.0f));
+								colors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 1.0f));
+								colors.push_back(glm::vec4(g_cubeColors.at(cubes[x][y][z]), 1.0f));
+								addFace(vertices, normals, indices, x, y, z, direction);
+							}
                         }
                     }
                 }
@@ -168,6 +215,7 @@ void Chunk::generateMesh() {
 
     // Create the actual mesh
 	m_mesh = std::make_unique<Mesh>(vertices, normals, indices, colors);
+	m_waterMesh = std::make_unique<Mesh>(waterVertices, waterNormals, waterIndices, waterColors);
 }
 
 void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices,
@@ -252,9 +300,12 @@ BiomeType Chunk::getBiomeType(fnl_state& noise, int x, int z) const
     else if (biomeNoise < 0.3f) {
         return BiomeType::Plains;
     }
-    else {
-        return BiomeType::Forest;
-    }
+	else if (biomeNoise < 0.6f) {
+		return BiomeType::Forest;
+	}
+	else {
+		return BiomeType::Mountains;
+	}
 }
 
 void Chunk::placeTree(int x, int y, int z)
@@ -263,7 +314,7 @@ void Chunk::placeTree(int x, int y, int z)
     int treeTopHeight = y + trunkHeight;
 
     // Place trunk blocks
-    for (int h = y; h < treeTopHeight && h < CHUNK_SIZE; h++)
+    for (int h = y; h < treeTopHeight && h < CHUNK_HEIGHT; h++)
     {
         cubes[x][h][z] = BlockType::Wood;
     }
@@ -282,7 +333,7 @@ void Chunk::placeTree(int x, int y, int z)
 
                 // Make sure leaves are within bounds of the chunk
                 if (leafX >= 0 && leafX < CHUNK_SIZE &&
-                    leafY >= 0 && leafY < CHUNK_SIZE &&
+                    leafY >= 0 && leafY < CHUNK_HEIGHT &&
                     leafZ >= 0 && leafZ < CHUNK_SIZE)
                 {
                     cubes[leafX][leafY][leafZ] = BlockType::Leaves;
@@ -294,51 +345,99 @@ void Chunk::placeTree(int x, int y, int z)
 
 
 
-bool Chunk::isFaceVisible(int x, int y, int z, int direction)
+bool Chunk::isFaceVisible(int x, int y, int z, int direction, BlockType faceType)
 {
-    if (direction == 0) { // Left face
-        if (x == 0) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
-            return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None;
+    if (faceType == BlockType::Water) {
+        if (direction == 0) { // Left face
+            if (x == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
+                return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None;
+            }
+            return cubes[x - 1][y][z] == BlockType::None;
         }
-        return cubes[x - 1][y][z] == BlockType::None;
-    }
-    else if (direction == 1) { // Right face
-        if (x == CHUNK_SIZE - 1) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y , m_z );
-            return !neighbor || neighbor->cubes[0][y][z] == BlockType::None;
+        else if (direction == 1) { // Right face
+            if (x == CHUNK_SIZE - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y, m_z);
+                return !neighbor || neighbor->cubes[0][y][z] == BlockType::None;
+            }
+            return cubes[x + 1][y][z] == BlockType::None;
         }
-        return cubes[x + 1][y][z] == BlockType::None;
-    }
-    else if (direction == 2) { // Bottom face
-        if (y == 0) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_SIZE, m_z);
-            return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None;
+        else if (direction == 2) { // Bottom face
+            if (y == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_HEIGHT, m_z);
+                return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None;
+            }
+            return cubes[x][y - 1][z] == BlockType::None;
         }
-        return cubes[x][y - 1][z] == BlockType::None;
-    }
-    else if (direction == 3) { // Top face
-        if (y == CHUNK_SIZE - 1) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_SIZE, m_z);
-            return !neighbor || neighbor->cubes[x][0][z] == BlockType::None;
+        else if (direction == 3) { // Top face
+            if (y == CHUNK_HEIGHT - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_HEIGHT, m_z);
+                return !neighbor || neighbor->cubes[x][0][z] == BlockType::None;
+            }
+            return cubes[x][y + 1][z] == BlockType::None;
         }
-        return cubes[x][y + 1][z] == BlockType::None;
-    }
-    else if (direction == 4) { // Back face
-        if (z == 0) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
-            return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None;
+        else if (direction == 4) { // Back face
+            if (z == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
+                return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None;
+            }
+            return cubes[x][y][z - 1] == BlockType::None;
         }
-        return cubes[x][y][z - 1] == BlockType::None;
-    }
-    else if (direction == 5) { // Front face
-        if (z == CHUNK_SIZE - 1) {
-            const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
-            return !neighbor || neighbor->cubes[x][y][0] == BlockType::None;
+        else if (direction == 5) { // Front face
+            if (z == CHUNK_SIZE - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
+                return !neighbor || neighbor->cubes[x][y][0] == BlockType::None;
+            }
+            return cubes[x][y][z + 1] == BlockType::None;
         }
-        return cubes[x][y][z + 1] == BlockType::None;
+        return false;
     }
-    return false;
+    else {
+        if (direction == 0) { // Left face
+            if (x == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
+                return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::Water;
+            }
+            return cubes[x - 1][y][z] == BlockType::None || cubes[x - 1][y][z] == BlockType::Water;
+        }
+        else if (direction == 1) { // Right face
+            if (x == CHUNK_SIZE - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y, m_z);
+                return !neighbor || neighbor->cubes[0][y][z] == BlockType::None || neighbor->cubes[0][y][z] == BlockType::Water;
+            }
+            return cubes[x + 1][y][z] == BlockType::None || cubes[x + 1][y][z] == BlockType::Water;
+        }
+        else if (direction == 2) { // Bottom face
+            if (y == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_HEIGHT, m_z);
+                return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::Water;
+            }
+            return cubes[x][y - 1][z] == BlockType::None || cubes[x][y - 1][z] == BlockType::Water;
+        }
+        else if (direction == 3) { // Top face
+            if (y == CHUNK_HEIGHT - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_HEIGHT, m_z);
+                return !neighbor || neighbor->cubes[x][0][z] == BlockType::None || neighbor->cubes[x][0][z] == BlockType::Water;
+            }
+            return cubes[x][y + 1][z] == BlockType::None || cubes[x][y + 1][z] == BlockType::Water;
+        }
+        else if (direction == 4) { // Back face
+            if (z == 0) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
+                return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::Water;
+            }
+            return cubes[x][y][z - 1] == BlockType::None || cubes[x][y][z - 1] == BlockType::Water;
+        }
+        else if (direction == 5) { // Front face
+            if (z == CHUNK_SIZE - 1) {
+                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
+                return !neighbor || neighbor->cubes[x][y][0] == BlockType::None || neighbor->cubes[x][y][0] == BlockType::Water;
+            }
+            return cubes[x][y][z + 1] == BlockType::None || cubes[x][y][z + 1] == BlockType::Water;
+        }
+        return false;
+    }
+   
 }
 
 } // namespace voxl

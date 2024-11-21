@@ -18,7 +18,7 @@ void Player::update(float deltaTime) {
 	processInput(glfwGetCurrentContext(), deltaTime);
 
     if (isSprinting) {
-        m_speedMultiplier = 2.0f;
+        m_speedMultiplier = 3.0f;
     }
     else {
         m_speedMultiplier = 1.0f;
@@ -68,9 +68,13 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                 Chunk* chunk = m_chunkManager.getChunk(newBlockPosition.x, newBlockPosition.y, newBlockPosition.z);
 
                 if (chunk != nullptr) {
-                    glm::ivec3 localBlockPos = glm::mod(glm::floor(newBlockPosition), static_cast<float>(Chunk::CHUNK_SIZE));
+                    int blockX = glm::mod(glm::floor(newBlockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
+                    int blockY = glm::mod(glm::floor(newBlockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
+                    int blockZ = glm::mod(glm::floor(newBlockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
+
+                    glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
-                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_SIZE && localBlockPos.z < Chunk::CHUNK_SIZE) {
+                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
                         chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, getSelectedBlock());
 
                         m_chunkManager.updateChunk(chunk);
@@ -90,9 +94,13 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                 Chunk* chunk = m_chunkManager.getChunk(m_blockPosition.x, m_blockPosition.y, m_blockPosition.z);
 
                 if (chunk != nullptr) {
-                    glm::ivec3 localBlockPos = glm::mod(glm::floor(m_blockPosition), static_cast<float>(Chunk::CHUNK_SIZE));
+                    int blockX = glm::mod(glm::floor(m_blockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
+                    int blockY = glm::mod(glm::floor(m_blockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
+                    int blockZ = glm::mod(glm::floor(m_blockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
+
+                    glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
-                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_SIZE && localBlockPos.z < Chunk::CHUNK_SIZE) {
+                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
                         chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::None);
                         //chunk->generateMesh();
 						m_chunkManager.updateChunk(chunk);
@@ -137,6 +145,7 @@ void Player::processMouseMovement(double xpos, double ypos) {
 
 bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::vec3& outBlockPosition, glm::vec3& outNormal) const
 {
+	std::unordered_set<BlockType> nonSelectableBlockTypes = { BlockType::Water, BlockType::None };
     glm::vec3 rayOrigin = m_camera.getPosition();
     glm::vec3 rayDirection = glm::normalize(m_camera.getForward());
     float step = 0.1f;
@@ -152,10 +161,16 @@ bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::v
         }
 
         // Get the local block position within the chunk
-        glm::ivec3 blockPos = glm::mod(glm::floor(currentPos), static_cast<float>(Chunk::CHUNK_SIZE));
+        //glm::ivec3 blockPos = glm::mod(glm::floor(currentPos), static_cast<float>(Chunk::CHUNK_SIZE));
+
+		int blockX = glm::mod(glm::floor(currentPos.x), static_cast<float>(Chunk::CHUNK_SIZE));
+		int blockY = glm::mod(glm::floor(currentPos.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
+		int blockZ = glm::mod(glm::floor(currentPos.z), static_cast<float>(Chunk::CHUNK_SIZE));
+
+		glm::ivec3 blockPos = glm::ivec3(blockX, blockY, blockZ);
 
         // Check if there is a block at this position
-        if (chunk->cubes[blockPos.x][blockPos.y][blockPos.z] != BlockType::None) {
+        if (nonSelectableBlockTypes.find(chunk->cubes[blockPos.x][blockPos.y][blockPos.z]) == nonSelectableBlockTypes.end()) {
             // Determine which face is hit based on ray direction
             glm::vec3 blockCenter = chunk->getPosition() + glm::vec3(blockPos) + glm::vec3(0.5f);
             glm::vec3 delta = currentPos - blockCenter;

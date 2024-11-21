@@ -119,7 +119,7 @@ public:
     void update(Player& player, const ChunkManager& chunkManager);
 
 	void renderCube(BlockType type, glm::vec3 position, glm::mat4 view, glm::mat4 projection);
-	void renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection);
+	void renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection, bool transparent);
     void renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection);
 	void renderHighlight(glm::vec3 block, glm::mat4 view, glm::mat4 projection);
 

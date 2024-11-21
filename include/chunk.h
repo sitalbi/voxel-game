@@ -26,14 +26,17 @@ class Chunk {
 
 public:
 	static const int CHUNK_SIZE = 32;
+	static const int CHUNK_HEIGHT = 128;
 
 	Chunk(const Chunk* chunk);
 	Chunk(int x, int y, int z, ChunkManager* chunkManager);
 	~Chunk();
 
-	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+	BlockType cubes[CHUNK_SIZE][CHUNK_HEIGHT][CHUNK_SIZE];
 
 	Mesh* getMesh() { return m_mesh.get(); }
+	Mesh* getWaterMesh() { return m_waterMesh.get(); }
+
 	glm::vec3 getPosition() const { return glm::vec3(m_x, m_y, m_z); }
 	int getIndexCount() { return m_indexCount; }
 
@@ -42,7 +45,7 @@ public:
 	void generate();
 	void generateMesh();
 
-	bool isFaceVisible(int x, int y, int z, int direction);
+	bool isFaceVisible(int x, int y, int z, int direction, BlockType faceType);
 
 private:
 	int m_x, m_y, m_z;
@@ -51,6 +54,7 @@ private:
 	ChunkManager* m_chunkManager;
 
 	std::unique_ptr<Mesh> m_mesh;
+	std::unique_ptr<Mesh> m_waterMesh;
 
 	void addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<unsigned int>& indices,
 				int x, int y, int z, int faceIndex);

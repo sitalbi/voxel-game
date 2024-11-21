@@ -9,10 +9,10 @@ Mesh::Mesh()
     vertices = std::vector<glm::vec3>();
     normals = std::vector<glm::vec3>();
     indices = std::vector<unsigned int>();
-	colors = std::vector<glm::vec3>();
+	colors = std::vector<glm::vec4>();
 }
 
-Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<unsigned int> indices, std::vector<glm::vec3> colors)
+Mesh::Mesh(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normals, std::vector<unsigned int> indices, std::vector<glm::vec4> colors)
 {
 	this->vertices = vertices;
 	this->normals = normals;
@@ -59,11 +59,11 @@ void Mesh::generateBuffers()
         // Generate and bind color buffer
         glGenBuffers(1, &CBO);
         glBindBuffer(GL_ARRAY_BUFFER, CBO);
-        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_STATIC_DRAW);
 
         // Set vertex attribute for colors (location 2)
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	}
 
     // Generate and bind index buffer
@@ -80,13 +80,13 @@ void Mesh::generateBuffers()
     glBindVertexArray(0);
 }
 
-void Mesh::setColors(std::vector<glm::vec3> colors)
+void Mesh::setColors(std::vector<glm::vec4> colors)
 {
 	this->colors = colors;
 	glBindVertexArray(VAO);
 	// Update color buffer
 	glBindBuffer(GL_ARRAY_BUFFER, CBO);
-	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec4), colors.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glBindVertexArray(0);
