@@ -21,6 +21,11 @@ enum class BiomeType {
 	Mountains
 };
 
+struct BiomeBlend {
+	BiomeType type;
+	float weight; 
+};
+
 class Chunk {
 
 
@@ -60,6 +65,7 @@ private:
 				int x, int y, int z, int faceIndex);
 
 	BiomeType getBiomeType(fnl_state& noise, int x, int z) const;
+	std::vector<BiomeBlend> calculateBiomeWeights(fnl_state& biomeNoise, int x, int z);
 
 	void placeTree(int x, int y, int z);
 };

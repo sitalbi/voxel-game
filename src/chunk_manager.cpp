@@ -34,7 +34,7 @@ void ChunkManager::loadChunks(glm::vec3 playerPosition)
 					Chunk* chunk = new Chunk(x * Chunk::CHUNK_SIZE, 0, z * Chunk::CHUNK_SIZE, this);
 					chunk->generate();
 					m_chunks[chunkPos] = chunk;
-					m_chunksCache[chunkPos] = chunk;
+					//m_chunksCache[chunkPos] = chunk;
 					m_updateList.insert(chunkPos);
 
 					// Update neighboring chunks
