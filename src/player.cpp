@@ -72,7 +72,8 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
                         localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_SIZE && localBlockPos.z < Chunk::CHUNK_SIZE) {
                         chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, getSelectedBlock());
-                        chunk->generateMesh();
+
+                        m_chunkManager.updateChunk(chunk);
                     }
                 }
             }
@@ -93,7 +94,8 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
                         localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_SIZE && localBlockPos.z < Chunk::CHUNK_SIZE) {
                         chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::None);
-                        chunk->generateMesh();
+                        //chunk->generateMesh();
+						m_chunkManager.updateChunk(chunk);
                     }
                 }
             }

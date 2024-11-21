@@ -37,7 +37,7 @@ public:
 	Chunk* getChunk(int x, int y, int z) const;
 	std::unordered_map<glm::ivec3, Chunk*> getChunks() const { return m_chunks; }
 
-	void addUpdate(glm::ivec3 chunkPos) { m_updateList.insert(chunkPos); }
+	void updateChunk(Chunk* chunk);
 
 
 private:

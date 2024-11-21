@@ -15,7 +15,11 @@ Chunk::Chunk(const Chunk* chunk)
 	m_x = chunk->m_x;
 	m_y = chunk->m_y;
 	m_z = chunk->m_z;
-	m_mesh = nullptr;
+	m_chunkManager = chunk->m_chunkManager;
+	if (chunk->m_mesh)
+	{
+		m_mesh = std::make_unique<Mesh>(*chunk->m_mesh);
+	}
 }
 
 Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
@@ -24,7 +28,6 @@ Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 	m_y = y;
 	m_z = z;
 	m_chunkManager = chunkManager;
-	m_mesh = nullptr;
     for (int x = 0; x < CHUNK_SIZE; x++)
     {
         for (int y = 0; y < CHUNK_SIZE; y++)
@@ -39,7 +42,6 @@ Chunk::Chunk(int x, int y, int z, ChunkManager* chunkManager)
 
 Chunk::~Chunk()
 {
-    delete m_mesh;
 }
 
 void Chunk::setBlockType(int x, int y, int z, BlockType type)
@@ -165,7 +167,7 @@ void Chunk::generateMesh() {
     }
 
     // Create the actual mesh
-    m_mesh = new Mesh(vertices, normals, indices, colors);
+	m_mesh = std::make_unique<Mesh>(vertices, normals, indices, colors);
 }
 
 void Chunk::addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices,

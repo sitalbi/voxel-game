@@ -123,7 +123,7 @@ public:
     void renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection);
 	void renderHighlight(glm::vec3 block, glm::mat4 view, glm::mat4 projection);
 
-    void renderMesh(Mesh* mesh, Shader* shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection);
+    void renderMesh(Mesh& mesh, Shader& shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection);
 
 	void renderUI();
 
@@ -135,9 +135,9 @@ public:
     
 
 private:
-	Mesh* m_cubeMesh;
-    Shader* m_defaultShader;
-    Shader* m_highlightShader;
+	std::unique_ptr<Mesh> m_cubeMesh;
+    std::unique_ptr<Shader> m_defaultShader;
+    std::unique_ptr<Shader> m_highlightShader;
 
     bool m_initialized;
 

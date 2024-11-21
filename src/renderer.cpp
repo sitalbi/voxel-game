@@ -17,9 +17,6 @@ Renderer::Renderer() : m_initialized(false)
 
 Renderer::~Renderer()
 {
-	delete m_defaultShader;
-	delete m_highlightShader;
-	delete m_cubeMesh;
 	glfwDestroyWindow(window);
 }
 
@@ -48,8 +45,8 @@ void Renderer::init()
 
 	initUI();
 
-	m_defaultShader = new Shader(RES_DIR "/shaders/default_vert.glsl", RES_DIR "/shaders/default_frag.glsl");
-	m_highlightShader = new Shader(RES_DIR "/shaders/highlight_vert.glsl", RES_DIR "/shaders/highlight_frag.glsl");
+	m_defaultShader = std::make_unique<Shader>(RES_DIR "/shaders/default_vert.glsl", RES_DIR "/shaders/default_frag.glsl");
+	m_highlightShader = std::make_unique<Shader>(RES_DIR "/shaders/highlight_vert.glsl", RES_DIR "/shaders/highlight_frag.glsl");
 	generateCubeMesh();
 
 	// OpenGL settings
@@ -69,7 +66,7 @@ void Renderer::init()
 
 void Renderer::generateCubeMesh()
 {
-	m_cubeMesh = new Mesh(g_cubeVertices, g_cubeNormals, g_cubeIndices, std::vector<glm::vec3>());
+	m_cubeMesh = std::make_unique<Mesh>(g_cubeVertices, g_cubeNormals, g_cubeIndices, std::vector<glm::vec3>());
 }
 
 void Renderer::initUI() const
@@ -214,13 +211,13 @@ void Renderer::renderCube(BlockType type, glm::vec3 position, glm::mat4 view, gl
 {
 	glm::mat4 scaledModel = glm::scale(glm::translate(glm::mat4(1.0f), position), glm::vec3(1.01f, 1.01f, 1.01f));
 	
-	renderMesh(m_cubeMesh, m_defaultShader, scaledModel, view, projection);
+	renderMesh(*m_cubeMesh, *m_defaultShader, scaledModel, view, projection);
 }
 
 
 void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection)
 {	
-	renderMesh(chunk.getMesh(), m_defaultShader, glm::translate(glm::mat4(1.0),chunk.getPosition()), view, projection);
+	renderMesh(*chunk.getMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0),chunk.getPosition()), view, projection);
 }
 
 void Renderer::renderChunks(const ChunkManager& chunkManager, glm::mat4 view, glm::mat4 projection)
@@ -237,22 +234,22 @@ void Renderer::renderHighlight(glm::vec3 block, glm::mat4 view, glm::mat4 projec
 
 	glm::mat4 scaleModel = glm::scale(model, glm::vec3(1.15f, 1.15f, 1.15f));
 
-	renderMesh(m_cubeMesh, m_highlightShader, scaleModel, view, projection);
+	renderMesh(*m_cubeMesh, *m_highlightShader, scaleModel, view, projection);
 }
 
 
-void Renderer::renderMesh(Mesh* mesh, Shader* shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void Renderer::renderMesh(Mesh& mesh, Shader& shader, glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 {
-	glBindVertexArray(mesh->VAO);
+	glBindVertexArray(mesh.VAO);
 
-	shader->Bind();
+	shader.Bind();
 
 	// Set uniforms
-	shader->SetUniformMat4f("model", model);
-	shader->SetUniformMat4f("view", view);
-	shader->SetUniformMat4f("projection", projection);
+	shader.SetUniformMat4f("model", model);
+	shader.SetUniformMat4f("view", view);
+	shader.SetUniformMat4f("projection", projection);
 
-	glDrawElements(GL_TRIANGLES, mesh->indices.size(), GL_UNSIGNED_INT, nullptr); 
+	glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, nullptr); 
 
 	glBindVertexArray(0);
 }

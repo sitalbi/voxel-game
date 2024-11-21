@@ -115,6 +115,25 @@ Chunk* ChunkManager::getChunk(int x, int y, int z) const
 	return nullptr;
 }
 
+void ChunkManager::updateChunk(Chunk* chunk)
+{
+	glm::vec3 chunkPos = chunk->getPosition();
+	chunkPos.x = static_cast<int>(chunkPos.x) / Chunk::CHUNK_SIZE;
+	chunkPos.z = static_cast<int>(chunkPos.z) / Chunk::CHUNK_SIZE;
+	m_updateList.insert(chunkPos);
 
+	// Update neighboring chunks
+	std::vector<glm::ivec3> neighbors = {
+		glm::ivec3(chunkPos.x - 1, 0, chunkPos.z),
+		glm::ivec3(chunkPos.x + 1, 0, chunkPos.z),
+		glm::ivec3(chunkPos.x, 0, chunkPos.z - 1),
+		glm::ivec3(chunkPos.x, 0, chunkPos.z + 1)
+	};
 
+	for (const auto& neighborPos : neighbors) {
+		if (m_chunks.find(neighborPos) != m_chunks.end()) {
+			m_updateList.insert(neighborPos);
+		}
+	}
+}
 } // namespace voxl

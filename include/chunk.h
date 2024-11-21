@@ -4,6 +4,8 @@
 #include "mesh.h"
 #include "vector"
 
+#include <memory>
+
 #include "glad/glad.h"
 
 struct fnl_state;
@@ -31,7 +33,7 @@ public:
 
 	BlockType cubes[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 
-	Mesh* getMesh() { return m_mesh; }
+	Mesh* getMesh() { return m_mesh.get(); }
 	glm::vec3 getPosition() const { return glm::vec3(m_x, m_y, m_z); }
 	int getIndexCount() { return m_indexCount; }
 
@@ -48,7 +50,7 @@ private:
 
 	ChunkManager* m_chunkManager;
 
-	Mesh* m_mesh;
+	std::unique_ptr<Mesh> m_mesh;
 
 	void addFace(std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<unsigned int>& indices,
 				int x, int y, int z, int faceIndex);
