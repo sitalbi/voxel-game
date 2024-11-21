@@ -388,97 +388,80 @@ void Chunk::placeTree(int x, int y, int z)
 
 bool Chunk::isFaceVisible(int x, int y, int z, int direction, BlockType faceType)
 {
-    if (faceType == BlockType::Water) {
-        if (direction == 0) { // Left face
-            if (x == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
-                return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None;
-            }
-            return cubes[x - 1][y][z] == BlockType::None;
-        }
-        else if (direction == 1) { // Right face
-            if (x == CHUNK_SIZE - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y, m_z);
-                return !neighbor || neighbor->cubes[0][y][z] == BlockType::None;
-            }
-            return cubes[x + 1][y][z] == BlockType::None;
-        }
-        else if (direction == 2) { // Bottom face
-            if (y == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_HEIGHT, m_z);
-                return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None;
-            }
-            return cubes[x][y - 1][z] == BlockType::None;
-        }
-        else if (direction == 3) { // Top face
-            if (y == CHUNK_HEIGHT - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_HEIGHT, m_z);
-                return !neighbor || neighbor->cubes[x][0][z] == BlockType::None;
-            }
-            return cubes[x][y + 1][z] == BlockType::None;
-        }
-        else if (direction == 4) { // Back face
-            if (z == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
-                return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None;
-            }
-            return cubes[x][y][z - 1] == BlockType::None;
-        }
-        else if (direction == 5) { // Front face
-            if (z == CHUNK_SIZE - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
-                return !neighbor || neighbor->cubes[x][y][0] == BlockType::None;
-            }
-            return cubes[x][y][z + 1] == BlockType::None;
-        }
-        return false;
-    }
-    else {
-        if (direction == 0) { // Left face
-            if (x == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
-                return !neighbor || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::None || neighbor->cubes[CHUNK_SIZE - 1][y][z] == BlockType::Water;
-            }
-            return cubes[x - 1][y][z] == BlockType::None || cubes[x - 1][y][z] == BlockType::Water;
-        }
-        else if (direction == 1) { // Right face
-            if (x == CHUNK_SIZE - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y, m_z);
-                return !neighbor || neighbor->cubes[0][y][z] == BlockType::None || neighbor->cubes[0][y][z] == BlockType::Water;
-            }
-            return cubes[x + 1][y][z] == BlockType::None || cubes[x + 1][y][z] == BlockType::Water;
-        }
-        else if (direction == 2) { // Bottom face
-            if (y == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_HEIGHT, m_z);
-                return !neighbor || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::None || neighbor->cubes[x][CHUNK_SIZE - 1][z] == BlockType::Water;
-            }
-            return cubes[x][y - 1][z] == BlockType::None || cubes[x][y - 1][z] == BlockType::Water;
-        }
-        else if (direction == 3) { // Top face
-            if (y == CHUNK_HEIGHT - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_HEIGHT, m_z);
-                return !neighbor || neighbor->cubes[x][0][z] == BlockType::None || neighbor->cubes[x][0][z] == BlockType::Water;
-            }
-            return cubes[x][y + 1][z] == BlockType::None || cubes[x][y + 1][z] == BlockType::Water;
-        }
-        else if (direction == 4) { // Back face
-            if (z == 0) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
-                return !neighbor || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::None || neighbor->cubes[x][y][CHUNK_SIZE - 1] == BlockType::Water;
-            }
-            return cubes[x][y][z - 1] == BlockType::None || cubes[x][y][z - 1] == BlockType::Water;
-        }
-        else if (direction == 5) { // Front face
-            if (z == CHUNK_SIZE - 1) {
-                const Chunk* neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
-                return !neighbor || neighbor->cubes[x][y][0] == BlockType::None || neighbor->cubes[x][y][0] == BlockType::Water;
-            }
-            return cubes[x][y][z + 1] == BlockType::None || cubes[x][y][z + 1] == BlockType::Water;
-        }
-        return false;
-    }
-   
-}
+    auto isBlockTransparent = [](BlockType type) {
+        return type == BlockType::None || type == BlockType::Water;
+        };
 
-} // namespace voxl
+    const Chunk* neighbor = nullptr;
+    int neighborX = x, neighborY = y, neighborZ = z;
+
+    switch (direction) {
+    case 0: // Left face
+        if (x == 0) {
+			neighbor = m_chunkManager->getChunk(m_x - CHUNK_SIZE, m_y, m_z);
+            neighborX = CHUNK_SIZE - 1;
+        }
+        else {
+            return faceType == BlockType::Water ? (cubes[x - 1][y][z] == BlockType::None) : isBlockTransparent(cubes[x - 1][y][z]);
+        }
+        break;
+    case 1: // Right face
+        if (x == CHUNK_SIZE - 1) {
+			neighbor = m_chunkManager->getChunk(m_x + CHUNK_SIZE, m_y, m_z);
+            neighborX = 0;
+        }
+        else {
+			return faceType == BlockType::Water ? (cubes[x + 1][y][z] == BlockType::None) : isBlockTransparent(cubes[x + 1][y][z]);
+        }
+        break;
+    case 2: // Bottom face
+        if (y == 0) {
+			neighbor = m_chunkManager->getChunk(m_x, m_y - CHUNK_HEIGHT, m_z);
+            neighborY = CHUNK_HEIGHT - 1;
+        }
+        else {
+			return faceType == BlockType::Water ? (cubes[x][y - 1][z] == BlockType::None) : isBlockTransparent(cubes[x][y - 1][z]);
+        }
+        break;
+    case 3: // Top face
+        if (y == CHUNK_HEIGHT - 1) {
+			neighbor = m_chunkManager->getChunk(m_x, m_y + CHUNK_HEIGHT, m_z);
+            neighborY = 0;
+        }
+        else {
+			return faceType == BlockType::Water ? (cubes[x][y + 1][z] == BlockType::None) : isBlockTransparent(cubes[x][y + 1][z]);
+        }
+        break;
+    case 4: // Back face
+        if (z == 0) {
+			neighbor = m_chunkManager->getChunk(m_x, m_y, m_z - CHUNK_SIZE);
+            neighborZ = CHUNK_SIZE - 1;
+        }
+        else {
+			return faceType == BlockType::Water ? (cubes[x][y][z - 1] == BlockType::None) : isBlockTransparent(cubes[x][y][z - 1]);
+        }
+        break;
+    case 5: // Front face
+        if (z == CHUNK_SIZE - 1) {
+			neighbor = m_chunkManager->getChunk(m_x, m_y, m_z + CHUNK_SIZE);
+            neighborZ = 0;
+        }
+        else {
+			return faceType == BlockType::Water ? (cubes[x][y][z + 1] == BlockType::None) : isBlockTransparent(cubes[x][y][z + 1]);
+        }
+        break;
+    }
+
+    if (neighbor) {
+        BlockType neighborBlockType = neighbor->cubes[neighborX][neighborY][neighborZ];
+        if (faceType == BlockType::Water) {
+            return neighborBlockType == BlockType::None;
+        }
+        else {
+            return isBlockTransparent(neighborBlockType);
+        }
+    }
+    return false;
+ }
+
+}; // namespace voxl
