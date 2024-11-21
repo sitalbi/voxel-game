@@ -23,7 +23,8 @@ namespace voxl {
         { BlockType::Sand, glm::vec3(1.0f, 1.0f, 0.5f) },
         { BlockType::Wood, glm::vec3(0.83f, 0.69f, 0.415f)},
 		{ BlockType::Water, glm::vec3(0.0f, 0.0f, 1.0f) },
-		{ BlockType::Leaves, glm::vec3(0.4f, 1.0f, 0.05f) }
+		{ BlockType::Leaves, glm::vec3(0.5f, 1.0f, 0.0f) },
+        { BlockType::Snow, glm::vec3(2.0f, 2.0f, 2.0f) }
     };
 
     static const std::vector<glm::vec3> g_cubeVertices = {

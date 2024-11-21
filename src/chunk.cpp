@@ -52,7 +52,7 @@ void Chunk::setBlockType(int x, int y, int z, BlockType type)
 
 std::vector<BiomeBlend> Chunk::calculateBiomeWeights(fnl_state& biomeNoise, int x, int z) {
     float biomeValue = fnlGetNoise2D(&biomeNoise, x, z);
-    biomeValue = (biomeValue + 1.0f) / 2.0f; // Normalize to [0, 1]
+    biomeValue = (biomeValue + 1.0f) / 2.0f; 
 
     std::vector<BiomeBlend> blends;
     if (biomeValue < 0.2f) {
@@ -80,7 +80,7 @@ void Chunk::generate() {
 
     // Configure biome noise
     fnl_state biomeNoise = fnlCreateState();
-    biomeNoise.noise_type = FNL_NOISE_OPENSIMPLEX2;
+    biomeNoise.noise_type = FNL_NOISE_OPENSIMPLEX2S;
     biomeNoise.frequency = 0.0005f;
 
     // Configure noise for each biome
@@ -103,31 +103,27 @@ void Chunk::generate() {
 
     fnl_state mountainsNoise = fnlCreateState();
     mountainsNoise.noise_type = FNL_NOISE_PERLIN;
-    mountainsNoise.frequency = 0.025f;
+    mountainsNoise.frequency = 0.018f;
     biomeNoiseConfigs[BiomeType::Mountains] = mountainsNoise;
 
-    // Iterate over x, z coordinates in the chunk
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             // Calculate biome weights for blending
             std::vector<BiomeBlend> blends = calculateBiomeWeights(biomeNoise, m_x + x, m_z + z);
 
-            // Blend heights based on biome weights
             float blendedHeight = 0.0f;
             float totalWeight = 0.0f;
 
             for (const auto& blend : blends) {
                 fnl_state& heightNoise = biomeNoiseConfigs[blend.type];
                 float noiseValue = fnlGetNoise2D(&heightNoise, m_x + x, m_z + z);
-                float biomeMaxHeight = (blend.type == BiomeType::Mountains) ? (CHUNK_HEIGHT / 2) : (CHUNK_SIZE / 2);
+                float biomeMaxHeight = (blend.type == BiomeType::Mountains) ? ((CHUNK_SIZE*3) / 2) : (CHUNK_SIZE / 2);
                 blendedHeight += ((noiseValue + 1.0f) * biomeMaxHeight) * blend.weight;
                 totalWeight += blend.weight;
             }
 
             // Calculate maxHeight based on blended result
             int maxHeight = static_cast<int>(blendedHeight / totalWeight);
-
-            // Ensure maxHeight is within bounds
             maxHeight = std::clamp(maxHeight, 1, CHUNK_HEIGHT - 1);
 
             // Generate terrain blocks up to maxHeight
@@ -167,12 +163,15 @@ void Chunk::generate() {
                         break;
 
                     case BiomeType::Mountains:
-                        if (y >= 25) {
+                        if (y >= 25 && y < 80) {
                             type = BlockType::Stone;
+                        }
+                        else if (y >= 80) {
+							type = BlockType::Snow;
                         }
                         else if (y < maxHeight - 3) {
                             type = BlockType::Dirt;
-                        }
+                        } 
                         else {
                             type = BlockType::Grass;
                         }
@@ -180,7 +179,6 @@ void Chunk::generate() {
                     }
                 }
 
-                // Assign the block if it’s not None
                 if (type != BlockType::None) {
                     cubes[x][y][z] = type;
                 }
@@ -195,14 +193,13 @@ void Chunk::generate() {
                 }
             }
 
-            // Place trees in suitable biomes
+            // Place trees
             for (const auto& blend : blends) {
                 if ((blend.type == BiomeType::Forest || blend.type == BiomeType::Plains)) {
                     // Check conditions for placing a tree
                     if (cubes[x][maxHeight][z] == BlockType::Grass &&
-                        (maxHeight < CHUNK_HEIGHT) && // Ensure maxHeight is within bounds
-                        cubes[x][maxHeight+1][z] == BlockType::None) {
-                        float treeProbability = (blend.type == BiomeType::Forest) ? 0.005f : 0.0025f;
+                        (maxHeight < CHUNK_HEIGHT) && cubes[x][maxHeight+1][z] == BlockType::None) {
+                        float treeProbability = (blend.type == BiomeType::Forest) ? 0.0035f : 0.001f;
 
                         // Try placing a tree based on probability
                         if (static_cast<float>(rand()) / RAND_MAX < treeProbability * blend.weight) {
@@ -215,11 +212,6 @@ void Chunk::generate() {
         }
     }
 }
-
-
-
-
-
 
 
 void Chunk::generateMesh() {

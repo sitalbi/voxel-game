@@ -11,7 +11,8 @@ namespace voxl {
 		Sand,
 		Wood,
 		Water,
-		Leaves
+		Leaves,
+		Snow
 	};
 
 	class Cube {
