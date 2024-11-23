@@ -97,15 +97,12 @@ void ChunkManager::unloadChunks(glm::vec3 playerPosition)
 	}
 }
 
-Chunk* ChunkManager::getChunk(int x, int y, int z) const
-{
-	int chunkX = x / Chunk::CHUNK_SIZE;
-	int chunkY = y / Chunk::CHUNK_HEIGHT;
-	int chunkZ = z / Chunk::CHUNK_SIZE;
+Chunk* ChunkManager::getChunk(float x, float y, float z) const {
+	// Calculate chunk coordinates properly for both positive and negative values
+	int chunkX = static_cast<int>(std::floor(x / Chunk::CHUNK_SIZE));
+	int chunkY = static_cast<int>(std::floor(y / Chunk::CHUNK_HEIGHT));
+	int chunkZ = static_cast<int>(std::floor(z / Chunk::CHUNK_SIZE));
 
-	if (x < 0 && x % Chunk::CHUNK_SIZE != 0) chunkX -= 1;
-	if (y < 0 && y % Chunk::CHUNK_HEIGHT != 0) chunkY -= 1;
-	if (z < 0 && z % Chunk::CHUNK_SIZE != 0) chunkZ -= 1;
 
 	glm::ivec3 chunkPos(chunkX, chunkY, chunkZ);
 	auto it = m_chunks.find(chunkPos);
@@ -114,6 +111,7 @@ Chunk* ChunkManager::getChunk(int x, int y, int z) const
 	}
 	return nullptr;
 }
+
 
 void ChunkManager::updateChunk(Chunk* chunk)
 {

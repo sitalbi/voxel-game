@@ -161,8 +161,6 @@ bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::v
         }
 
         // Get the local block position within the chunk
-        //glm::ivec3 blockPos = glm::mod(glm::floor(currentPos), static_cast<float>(Chunk::CHUNK_SIZE));
-
 		int blockX = glm::mod(glm::floor(currentPos.x), static_cast<float>(Chunk::CHUNK_SIZE));
 		int blockY = glm::mod(glm::floor(currentPos.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
 		int blockZ = glm::mod(glm::floor(currentPos.z), static_cast<float>(Chunk::CHUNK_SIZE));
