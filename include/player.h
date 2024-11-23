@@ -55,8 +55,8 @@ public:
 
 private:
     glm::vec3 m_position;
+	glm::vec3 m_cameraPosition;
     glm::vec3 m_velocity;
-
 
 	glm::vec3 m_blockPosition;
 	glm::vec3 m_blockNormal;
@@ -67,17 +67,22 @@ private:
 	bool mouseRightClicked = false;
     bool wireframeMode = false;
 	bool m_blockFound = false;
+	bool m_isGrounded = true;
+
+	float m_speed;
+    float m_defaultSpeed = 5.0f;
+    float m_speedMultiplier = 1.0f;  
+	float m_gravity = -12.0f;
+	float m_verticalVelocity = 0.0f;
 
     Camera& m_camera;
-	float m_speed;
-    float m_defaultSpeed = 10.0f;
-    float m_speedMultiplier = 1.0f;  
-
 	ChunkManager& m_chunkManager;
 
 	int m_selectedBlock = 0;
 
     void updateCamera();
+
+	void handleCollisions(float deltaTime);
 };
 
 

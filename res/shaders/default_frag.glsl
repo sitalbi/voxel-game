@@ -2,9 +2,13 @@
 
 layout(location = 0) out vec4 FragColor;
 
-in vec4 w_Position;
-in vec4 Normal;
-in vec4 vertexColor;
+in vec4 w_Position;  
+in vec4 Normal;      
+in vec4 vertexColor; 
+
+uniform vec3 fogColor = vec3(0.0, 0.7, 1.0);
+uniform float fogStart = 100;
+uniform float fogEnd = 150;
 
 void main()
 {
@@ -33,5 +37,12 @@ void main()
         color = vColor * 0.5;
     }
 
-    FragColor = vec4(color, vertexColor.w);
+    // Calculate fog factor based on depth
+    float depth = gl_FragCoord.z / gl_FragCoord.w; 
+    float fogFactor = clamp((fogEnd - depth) / (fogEnd - fogStart), 0.0, 1.0);
+
+    vec3 finalColor = mix(fogColor, color, fogFactor);
+
+    // Output the final color
+    FragColor = vec4(finalColor, vertexColor.w);
 }

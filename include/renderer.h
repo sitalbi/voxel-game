@@ -140,6 +140,8 @@ private:
     std::unique_ptr<Shader> m_defaultShader;
     std::unique_ptr<Shader> m_highlightShader;
 
+	glm::vec4 m_skyColor;
+
     bool m_initialized;
 
 	unsigned int m_crosshairTexture;

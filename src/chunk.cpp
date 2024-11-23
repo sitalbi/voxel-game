@@ -354,6 +354,11 @@ void Chunk::placeTree(int x, int y, int z)
     int trunkHeight = rand() % 4 + 3; ; 
     int treeTopHeight = y + trunkHeight;
 
+	if (treeTopHeight >= CHUNK_HEIGHT)
+	{
+        return;
+	}
+
     // Place trunk blocks
     for (int h = y; h < treeTopHeight && h < CHUNK_HEIGHT; h++)
     {

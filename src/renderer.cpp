@@ -65,6 +65,13 @@ void Renderer::init()
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
+
+	m_defaultShader->Bind();
+	m_defaultShader->SetUniform1f("fogStart", ChunkManager::LOAD_RADIUS * Chunk::CHUNK_SIZE - 10);
+	m_defaultShader->SetUniform1f("fogEnd", ChunkManager::LOAD_RADIUS * Chunk::CHUNK_SIZE);
+	m_defaultShader->SetUniform3f("fogColor", m_skyColor.x, m_skyColor.y, m_skyColor.z);
+
 	m_initialized = true;
 }
 
@@ -161,7 +168,7 @@ void Renderer::setupUI(Player& player, const glm::vec3& blockPos = glm::vec3(-10
 void Renderer::update(Player& player, const ChunkManager& chunkManager)
 {
 	bool blockFound = player.blockFound();
-	glClearColor(0.0f, 0.7f, 1.0f, 1.0f);
+	glClearColor(m_skyColor.r, m_skyColor.g, m_skyColor.b, m_skyColor.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);

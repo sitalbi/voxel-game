@@ -17,41 +17,50 @@ void Player::update(float deltaTime) {
 
 	processInput(glfwGetCurrentContext(), deltaTime);
 
+    if (!m_isGrounded) {
+        m_verticalVelocity += m_gravity*deltaTime;
+    }
+    else {
+        m_verticalVelocity = 0.0f;
+    }
+
     if (isSprinting) {
-        m_speedMultiplier = 3.0f;
+        m_speedMultiplier = 1.5f;
     }
     else {
         m_speedMultiplier = 1.0f;
     }
 
-	m_position += m_velocity * deltaTime;
+    m_position += m_velocity * deltaTime;
+    m_position.y += m_verticalVelocity * deltaTime;
+
+    handleCollisions(deltaTime);
 
 	updateCamera();
-
 }
 
 void Player::processInput(GLFWwindow* window, float deltaTime) {
 	m_velocity = glm::vec3(0.0f);
+    glm::vec3 direction = glm::vec3(m_camera.getForward().x, 0.0f, m_camera.getForward().z);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_velocity += m_camera.getForward() * m_speed * m_speedMultiplier;
+        m_velocity += direction * m_speed * m_speedMultiplier;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        m_velocity -= m_camera.getForward() * m_speed * m_speedMultiplier;
+		m_velocity -= direction * m_speed * m_speedMultiplier;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        m_velocity -= m_camera.getRight() * m_speed * m_speedMultiplier;
+		m_velocity -= m_camera.getRight() * m_speed * m_speedMultiplier;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         m_velocity += m_camera.getRight() * m_speed * m_speedMultiplier;
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        m_velocity += m_camera.getUp() * m_speed * m_speedMultiplier;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-        m_velocity -= m_camera.getUp() * m_speed * m_speedMultiplier;
-    }
 
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && m_isGrounded) {
+        m_verticalVelocity = 5.0f;
+        m_isGrounded = false;
+    }
+	m_velocity.y = 0;
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
         isSprinting = true;
     }
@@ -102,7 +111,7 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
                     if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
                         localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
                         chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::None);
-                        //chunk->generateMesh();
+                        
 						m_chunkManager.updateChunk(chunk);
                     }
                 }
@@ -191,9 +200,6 @@ bool Player::rayCast(const ChunkManager& chunkManager, float maxDistance, glm::v
 }
 
 
-
-
-
 void Player::handle_scroll(double xoffset, double yoffset)
 {
     if (yoffset < 0) {
@@ -211,7 +217,27 @@ void Player::handle_scroll(double xoffset, double yoffset)
 }
 
 void Player::updateCamera() {
-	m_camera.setPosition(m_position);
+    m_cameraPosition = glm::vec3(m_position.x, m_position.y + 0.5f, m_position.z);
+	m_camera.setPosition(m_cameraPosition);
+}
+
+void Player::handleCollisions(float deltaTime)
+{
+	Chunk* chunk = m_chunkManager.getChunk(m_position.x, m_position.y, m_position.z);
+	if (chunk == nullptr) {
+		return;
+	}
+
+    glm::vec3 localPos = m_position - chunk->getPosition();
+
+	glm::ivec3 localBlockPos = glm::floor(localPos);
+
+	if (chunk->cubes[localBlockPos.x][localBlockPos.y-1][localBlockPos.z] != BlockType::None && chunk->cubes[localBlockPos.x][localBlockPos.y - 1][localBlockPos.z] != BlockType::Water) {
+		m_isGrounded = true;
+	}
+	else {
+		m_isGrounded = false;
+	}
 }
 
 } // namespace voxl
