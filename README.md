@@ -4,7 +4,7 @@ Voxel game project inspired by Minecraft. Written in C++ using OpenGL for render
 
 ## TODO
 
-- [ ] Implement Physics + player controller
+- [ ] Implement Physics and collisions + player controller
 - [ ] Optimization: 
 	- Greedy meshing
 - [ ] Add textures
