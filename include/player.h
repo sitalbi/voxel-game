@@ -5,6 +5,7 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 #include <chunk_manager.h>
+#include <memory>
 
 namespace voxl {
 class Player;
@@ -55,25 +56,34 @@ public:
 
 private:
     glm::vec3 m_position;
+	glm::vec3 m_direction;
 	glm::vec3 m_cameraPosition;
     glm::vec3 m_velocity;
+	glm::vec3 m_playerForward;
 
 	glm::vec3 m_blockPosition;
 	glm::vec3 m_blockNormal;
 
     bool isSprinting = false;
     bool f1Pressed = false;
+	bool f2Pressed = false;
 	bool mouseLeftClicked = false;
 	bool mouseRightClicked = false;
     bool wireframeMode = false;
 	bool m_blockFound = false;
 	bool m_isGrounded = true;
 
+	bool m_isFlying = true;
+
 	float m_speed;
     float m_defaultSpeed = 5.0f;
-    float m_speedMultiplier = 1.0f;  
-	float m_gravity = -12.0f;
+	float m_speedMultiplier = 1.0f;
+    float m_defaultSpeedMultiplier = 1.0f;  
+	float m_gravity = -15.0f;
 	float m_verticalVelocity = 0.0f;
+
+	float m_height = 1.5f;
+	float m_width = 0.25f;
 
     Camera& m_camera;
 	ChunkManager& m_chunkManager;
@@ -82,7 +92,7 @@ private:
 
     void updateCamera();
 
-	void handleCollisions(float deltaTime);
+	void handleCollisions(float dx, float dy, float dz);
 };
 
 

@@ -134,4 +134,32 @@ void ChunkManager::updateChunk(Chunk* chunk)
 		}
 	}
 }
+BlockType ChunkManager::getBlockType(float x, float y, float z) const
+{
+	Chunk* chunk = getChunk(x, y, z);
+	if (chunk == nullptr) {
+		return BlockType::None;
+	}
+
+	glm::vec3 localPos = glm::vec3(x, y, z) - chunk->getPosition();
+
+	glm::ivec3 localBlockPos = glm::floor(localPos);
+
+	return chunk->cubes[localBlockPos.x][localBlockPos.y][localBlockPos.z];
+}
+
+bool ChunkManager::isSolidBlock(float x, float y, float z) const
+{
+	Chunk* chunk = getChunk(x, y, z);
+	if (chunk == nullptr) {
+		return false;
+	}
+
+	glm::vec3 localPos = glm::vec3(x, y, z) - chunk->getPosition();
+
+	glm::ivec3 localBlockPos = glm::floor(localPos);
+
+	return chunk->cubes[localBlockPos.x][localBlockPos.y][localBlockPos.z] != BlockType::None &&
+		chunk->cubes[localBlockPos.x][localBlockPos.y][localBlockPos.z] != BlockType::Water;
+}
 } // namespace voxl

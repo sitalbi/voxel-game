@@ -20,7 +20,7 @@ int main() {
 
 	voxl::Camera camera(window_width, window_height, glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
 
-	voxl::Player player(glm::vec3(0.0f, 20.0f, 0.0f), camera, chunkManager);
+	voxl::Player player(glm::vec3(0.0f, 20.0f, 2.0f), camera, chunkManager);
 	
 
 	// Window settings

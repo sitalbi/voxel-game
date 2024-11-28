@@ -10,44 +10,57 @@ Player::Player(glm::vec3 position, Camera& camera, ChunkManager& chunkManager) :
 	m_speed = m_defaultSpeed;
 	m_blockPosition = glm::vec3(0.0f);
 	updateCamera();
+	m_playerForward = camera.getForward();
 }
 
 void Player::update(float deltaTime) {
     m_blockFound = rayCast(m_chunkManager, 10.0f, m_blockPosition, m_blockNormal);
 
-	processInput(glfwGetCurrentContext(), deltaTime);
+    // Process user input to update velocity
+    processInput(glfwGetCurrentContext(), deltaTime);
 
-    if (!m_isGrounded) {
-        m_verticalVelocity += m_gravity*deltaTime;
-    }
-    else {
-        m_verticalVelocity = 0.0f;
+    if (!m_isFlying) {
+        // Apply gravity if not grounded
+        if (!m_isGrounded) {
+			m_verticalVelocity += m_gravity * deltaTime;
+        }
+        else {
+            m_verticalVelocity = 0.0f;
+        }
+
+        m_velocity.y = m_verticalVelocity;
     }
 
     if (isSprinting) {
-        m_speedMultiplier = 1.5f;
+		m_speedMultiplier = m_defaultSpeedMultiplier * 1.5f;
     }
     else {
-        m_speedMultiplier = 1.0f;
+        m_speedMultiplier = m_defaultSpeedMultiplier;
     }
 
-    m_position += m_velocity * deltaTime;
-    m_position.y += m_verticalVelocity * deltaTime;
+    m_position.x += m_velocity.x * deltaTime;
+	if (!m_isFlying) handleCollisions(m_velocity.x, 0.0f, 0.0f);
+	m_position.y += m_velocity.y * deltaTime;
+    if (!m_isFlying) handleCollisions(0.0f, m_velocity.y, 0.0f);
+	m_position.z += m_velocity.z * deltaTime;
+    if (!m_isFlying) handleCollisions(0.0f, 0.0f, m_velocity.z);
 
-    handleCollisions(deltaTime);
+    // Update camera position
+    updateCamera();
 
-	updateCamera();
+    // Update forward direction of the player
+    m_playerForward = glm::normalize(glm::vec3(m_camera.getForward().x, 0.0f, m_camera.getForward().z));
 }
+
 
 void Player::processInput(GLFWwindow* window, float deltaTime) {
 	m_velocity = glm::vec3(0.0f);
-    glm::vec3 direction = glm::vec3(m_camera.getForward().x, 0.0f, m_camera.getForward().z);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        m_velocity += direction * m_speed * m_speedMultiplier;
+        m_velocity += m_playerForward * m_speed * m_speedMultiplier;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		m_velocity -= direction * m_speed * m_speedMultiplier;
+		m_velocity -= m_playerForward * m_speed * m_speedMultiplier;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		m_velocity -= m_camera.getRight() * m_speed * m_speedMultiplier;
@@ -56,11 +69,21 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
         m_velocity += m_camera.getRight() * m_speed * m_speedMultiplier;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && m_isGrounded) {
-        m_verticalVelocity = 5.0f;
-        m_isGrounded = false;
+    if (m_isFlying) {
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			m_velocity += m_camera.getUp() * m_speed * m_speedMultiplier;
+        }
+		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+			m_velocity -= m_camera.getUp() * m_speed * m_speedMultiplier;
+		}
     }
-	m_velocity.y = 0;
+    else {
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && m_isGrounded) {
+            m_verticalVelocity = 6.5f;
+            m_isGrounded = false;
+        }
+    }
+
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
         isSprinting = true;
     }
@@ -143,6 +166,27 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
         f1Pressed = false;
     }
 
+    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
+        if (!f2Pressed) {
+			m_isFlying = !m_isFlying;
+            if (m_isFlying) {
+				m_speed = m_defaultSpeed * 2.0f;
+				m_speedMultiplier = m_defaultSpeedMultiplier * 2.0f;
+				m_defaultSpeedMultiplier = 2.0f;
+            }
+            else {
+				m_speed = m_defaultSpeed;
+				m_speedMultiplier = m_defaultSpeedMultiplier;
+				m_defaultSpeedMultiplier = 1.0f;
+            }
+            f2Pressed = true;
+        }
+    }
+    else {
+        f2Pressed = false;
+    }
+
+
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -217,27 +261,103 @@ void Player::handle_scroll(double xoffset, double yoffset)
 }
 
 void Player::updateCamera() {
-    m_cameraPosition = glm::vec3(m_position.x, m_position.y + 0.5f, m_position.z);
+    m_cameraPosition = glm::vec3(m_position.x, m_position.y + m_height, m_position.z);
 	m_camera.setPosition(m_cameraPosition);
 }
 
-void Player::handleCollisions(float deltaTime)
+// AABB collision detection
+void Player::handleCollisions(float dx, float dy, float dz)
 {
-	Chunk* chunk = m_chunkManager.getChunk(m_position.x, m_position.y, m_position.z);
-	if (chunk == nullptr) {
-		return;
+	// normalize the direction
+	glm::vec3 direction = glm::normalize(glm::vec3(dx, dy, dz));
+
+    float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, y5;
+	x1 = glm::floor(m_position.x - m_width);
+	y1 = glm::floor(m_position.y);
+	z1 = glm::floor(m_position.z - m_width);
+	x2 = glm::floor(m_position.x + m_width);
+	y2 = glm::floor(m_position.y + m_height);
+	z2 = glm::floor(m_position.z + m_width);
+
+    // Vertical collision
+    // down
+    if (direction.y != 0) {
+        if (m_chunkManager.isSolidBlock(x1, y1, z1) || m_chunkManager.isSolidBlock(x2, y1, z1) ||
+            m_chunkManager.isSolidBlock(x2, y1, z2) || m_chunkManager.isSolidBlock(x1, y1, z2)) {
+            if (direction.y < 0) {
+                m_position.y = y1 + 1;
+                m_velocity.y = 0.0f;
+                m_isGrounded = true;
+            }
+        }
+        else {
+            m_isGrounded = false;
+        }
+    }
+
+    // up
+	if (m_chunkManager.isSolidBlock(x1, y2, z1) || m_chunkManager.isSolidBlock(x2, y2, z1) ||
+		m_chunkManager.isSolidBlock(x2, y2, z2) || m_chunkManager.isSolidBlock(x1, y2, z2)) {
+		if (direction.y > 0) {
+			m_position.y = y2 - m_height - 0.01f;
+			m_velocity.y = 0.0f;
+		}
 	}
 
-    glm::vec3 localPos = m_position - chunk->getPosition();
-
-	glm::ivec3 localBlockPos = glm::floor(localPos);
-
-	if (chunk->cubes[localBlockPos.x][localBlockPos.y-1][localBlockPos.z] != BlockType::None && chunk->cubes[localBlockPos.x][localBlockPos.y - 1][localBlockPos.z] != BlockType::Water) {
-		m_isGrounded = true;
+	// Horizontal collision
+	x3 = glm::floor(m_position.x - direction.x - m_width);
+	y3 = glm::floor(m_position.y - direction.y);
+	z3 = glm::floor(m_position.z - direction.z - m_width);
+	x4 = glm::floor(m_position.x - direction.x + m_width);
+	y4 = glm::floor(m_position.y - direction.y + m_height);
+	z4 = glm::floor(m_position.z - direction.z + m_width);
+	y5 = glm::round(y3 + (y4 - y3) / 2); // previous y position
+	
+	// right
+	if (m_chunkManager.isSolidBlock(x1, y3, z3) || m_chunkManager.isSolidBlock(x1, y3, z4) ||
+		m_chunkManager.isSolidBlock(x1, y4, z3) || m_chunkManager.isSolidBlock(x1, y4, z4) ||
+        m_chunkManager.isSolidBlock(x1, y5, z3) || m_chunkManager.isSolidBlock(x1, y5, z4)) {
+		
+        if (direction.x < 0) {
+            m_position.x = x3 + m_width;
+            m_velocity.x = 0.0f;
+        }
 	}
-	else {
-		m_isGrounded = false;
-	}
+
+	// left
+    if (m_chunkManager.isSolidBlock(x2, y3, z3) || m_chunkManager.isSolidBlock(x2, y3, z4) ||
+        m_chunkManager.isSolidBlock(x2, y4, z3) || m_chunkManager.isSolidBlock(x2, y4, z4) ||
+        m_chunkManager.isSolidBlock(x2, y5, z3) || m_chunkManager.isSolidBlock(x2, y5, z4)) {
+
+        if (direction.x > 0) {
+            m_position.x = (x4+1) - m_width - 0.01f;
+            m_velocity.x = 0.0f;
+        }
+    }
+
+	// forward
+    if (m_chunkManager.isSolidBlock(x3, y3, z1) || m_chunkManager.isSolidBlock(x4, y3, z1) ||
+        m_chunkManager.isSolidBlock(x4, y4, z1) || m_chunkManager.isSolidBlock(x3, y4, z1) ||
+        m_chunkManager.isSolidBlock(x3, y5, z1) || m_chunkManager.isSolidBlock(x4, y5, z1)) {
+
+        if (direction.z < 0) {
+            m_position.z = z3 + m_width;
+            m_velocity.z = 0.0f;
+        }
+    }
+
+	// backward
+    if (m_chunkManager.isSolidBlock(x3, y3, z2) || m_chunkManager.isSolidBlock(x4, y3, z2) ||
+        m_chunkManager.isSolidBlock(x4, y4, z2) || m_chunkManager.isSolidBlock(x3, y4, z2) ||
+        m_chunkManager.isSolidBlock(x3, y5, z2) || m_chunkManager.isSolidBlock(x4, y5, z2)) {
+
+        if (direction.z > 0) {
+            m_position.z = (z4+1) - m_width - 0.01f;
+            m_velocity.z = 0.0f;
+        }
+    }
 }
+
+
 
 } // namespace voxl

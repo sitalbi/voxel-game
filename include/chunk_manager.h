@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "cube.h"
 #include <unordered_map>
 #include <unordered_set>
 
@@ -17,8 +18,6 @@ namespace std {
 
 namespace voxl
 {
-
-
 
 class Chunk;
 
@@ -39,6 +38,8 @@ public:
 
 	void updateChunk(Chunk* chunk);
 
+	BlockType getBlockType(float x, float y, float z) const;
+	bool isSolidBlock(float x, float y, float z) const;
 
 private:
 	std::unordered_map<glm::ivec3, Chunk*> m_chunks;
