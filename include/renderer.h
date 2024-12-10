@@ -136,9 +136,12 @@ public:
     
 
 private:
+    const unsigned int SHADOW_WIDTH = 4096*4, SHADOW_HEIGHT = 4096*4;
+
 	std::unique_ptr<Mesh> m_cubeMesh;
     std::unique_ptr<Shader> m_defaultShader;
     std::unique_ptr<Shader> m_highlightShader;
+	std::unique_ptr<Shader> m_shadowShader;
 
 	glm::vec4 m_skyColor;
 
@@ -146,6 +149,26 @@ private:
 
 	unsigned int m_crosshairTexture;
 
+	unsigned int m_depthMapFBO;
+	unsigned int m_depthMap;
+
+	glm::mat4 m_lightProjection;
+	glm::mat4 m_lightView;
+    glm::mat4 m_lightSpaceMatrix;
+	glm::vec3 m_lightPos;
+	glm::vec3 m_lightDir;
+
+    float m_lightAzimuth = 0.0f;  
+    float m_lightElevation = glm::radians(45.0f);
+
+	void initDepthMap();
+	void initLighting();
+    void updateLighting(const glm::vec3& lightTarget);
+
 	unsigned int loadTexture(const char* path);
+
+	void renderShadowMap(const ChunkManager& chunkManager);
+
 };
+
 }; // namespace voxl

@@ -2,47 +2,66 @@
 
 layout(location = 0) out vec4 FragColor;
 
-in vec4 w_Position;  
-in vec4 Normal;      
-in vec4 vertexColor; 
+in vec4 normal;          
+in vec4 vertexColor;     
+in vec4 fragPosLightSpace; 
+in vec3 lightDirection;
 
+uniform sampler2D shadowMap;
 uniform vec3 fogColor = vec3(0.0, 0.7, 1.0);
 uniform float fogStart = 100;
 uniform float fogEnd = 150;
 
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // Transform to normalized device coordinates
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    // Check if fragment is outside the shadow map bounds
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
+        return 0.1;
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+
+    float currentDepth = projCoords.z;
+
+     float bias = max(0.022 * (1.0 - dot(normalize(normal.xyz), normalize(-lightDirection))), 0.001);
+
+    // Percentage-Closer Filtering
+//    float shadow = 0.0;
+//    int samples = 2; 
+//    float texelSize = 1.0 / textureSize(shadowMap, 0).x;
+//
+//    for (int x = -samples; x <= samples; x++)
+//    {
+//        for (int y = -samples; y <= samples; y++)
+//        {
+//            vec2 offset = vec2(x, y) * texelSize;
+//            float closestDepth = texture(shadowMap, projCoords.xy + offset).r;
+//            shadow += currentDepth > closestDepth + bias ? 0.5 : 0.1;
+//        }
+//    }
+//    shadow /= pow((samples * 2 + 1), 2);
+
+    // No PCF
+    float shadow = currentDepth > closestDepth + bias ? 0.5 : 0.1;
+
+    return shadow;
+}
+
 void main()
 {
-    vec3 color;
-    vec3 vColor = vec3(vertexColor);
 
-    if (Normal.x > 0.9) { 
-        color = vColor * 0.7;
-    } 
-    else if (Normal.x < -0.9) { 
-        color = vColor * 0.45;
-    } 
-    else if (Normal.y > 0.9) { 
-        color = vColor * 0.8;
-    } 
-    else if (Normal.y < -0.9) { 
-        color = vColor * 0.35;
-    } 
-    else if (Normal.z > 0.9) { 
-        color = vColor * 0.6;
-    } 
-    else if (Normal.z < -0.9) { 
-        color = vColor * 0.3;
-    } 
-    else {
-        color = vColor * 0.5;
-    }
+    // Calculate shadow
+    float shadow = ShadowCalculation(fragPosLightSpace);
 
-    // Calculate fog factor based on depth
+    vec3 finalColor = (1.0 - shadow) * vertexColor.rgb;
+
     float depth = gl_FragCoord.z / gl_FragCoord.w; 
     float fogFactor = clamp((fogEnd - depth) / (fogEnd - fogStart), 0.0, 1.0);
 
-    vec3 finalColor = mix(fogColor, color, fogFactor);
+    finalColor = mix(fogColor, finalColor, fogFactor);
 
-    // Output the final color
     FragColor = vec4(finalColor, vertexColor.w);
 }

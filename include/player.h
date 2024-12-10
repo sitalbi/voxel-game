@@ -60,6 +60,7 @@ private:
 	glm::vec3 m_cameraPosition;
     glm::vec3 m_velocity;
 	glm::vec3 m_playerForward;
+	glm::vec3 m_playerUp;
 
 	glm::vec3 m_blockPosition;
 	glm::vec3 m_blockNormal;

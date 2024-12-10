@@ -11,6 +11,7 @@ Player::Player(glm::vec3 position, Camera& camera, ChunkManager& chunkManager) :
 	m_blockPosition = glm::vec3(0.0f);
 	updateCamera();
 	m_playerForward = camera.getForward();
+	m_playerUp = camera.getUp();
 }
 
 void Player::update(float deltaTime) {
@@ -71,10 +72,10 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
 
     if (m_isFlying) {
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			m_velocity += m_camera.getUp() * m_speed * m_speedMultiplier;
+			m_velocity += m_playerUp * m_speed * m_speedMultiplier;
         }
 		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-			m_velocity -= m_camera.getUp() * m_speed * m_speedMultiplier;
+			m_velocity -= m_playerUp * m_speed * m_speedMultiplier;
 		}
     }
     else {
