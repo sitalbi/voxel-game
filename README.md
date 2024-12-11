@@ -13,10 +13,10 @@ Voxel game project inspired by Minecraft. Written in C++ using OpenGL for render
 ## TODO
 
 - [x] Implement Physics and collisions + player controller
+- [X] Improve lighting system: 
+	- Add shadows
+	- Sun and directional light
 - [ ] Optimization: 
 	- Greedy meshing
 - [ ] Add textures
-- [ ] Improve lighting system: 
-	- Add shadows
-	- Sun and directional light (?)
 - [ ] Seed for terrain generation
