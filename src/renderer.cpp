@@ -360,7 +360,7 @@ void Renderer::initLighting()
 
 	// Define azimuth and elevation angles
 	m_lightAzimuth = glm::pi<float>();
-	m_lightElevation = 0.3f;
+	m_lightElevation = -1.5f;
 
 	m_lightDir.x = cos(m_lightElevation) * cos(m_lightAzimuth);
 	m_lightDir.y = sin(m_lightElevation);
