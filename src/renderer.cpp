@@ -8,6 +8,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "algorithm"
+
+#define PI 3.14159265359
+
 namespace voxl {
 
 Renderer::Renderer() : m_initialized(false)
@@ -69,9 +73,9 @@ void Renderer::init()
 	m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
 
 	m_defaultShader->Bind();
-	m_defaultShader->SetUniform1f("fogStart", ChunkManager::LOAD_RADIUS * Chunk::CHUNK_SIZE - 10);
+	/*m_defaultShader->SetUniform1f("fogStart", ChunkManager::LOAD_RADIUS * Chunk::CHUNK_SIZE - 10);
 	m_defaultShader->SetUniform1f("fogEnd", ChunkManager::LOAD_RADIUS * Chunk::CHUNK_SIZE);
-	m_defaultShader->SetUniform3f("fogColor", m_skyColor.x, m_skyColor.y, m_skyColor.z);
+	m_defaultShader->SetUniform3f("fogColor", m_skyColor.x, m_skyColor.y, m_skyColor.z);*/
 
 	initLighting();
 	initDepthMap();
@@ -117,6 +121,8 @@ void Renderer::setupUI(Player& player, const glm::vec3& blockPos = glm::vec3(-10
 	if (blockPos.y != -10000.0f) {
 		ImGui::Text("Block position: (%.2f, %.2f, %.2f)", blockPos.x, blockPos.y, blockPos.z);
 	}
+	ImGui::Text("Light Azimuth: %.2f", m_lightAzimuth);
+	ImGui::Text("Light Elevation: %.2f", m_lightElevation);
 	ImGui::End();
 
 	// Crosshair
@@ -172,9 +178,19 @@ void Renderer::setupUI(Player& player, const glm::vec3& blockPos = glm::vec3(-10
 void Renderer::update(Player& player, const ChunkManager& chunkManager)
 {
 	bool blockFound = player.blockFound();
-	updateLighting(player.getPosition());
 	renderShadowMap(chunkManager);
 
+	// TODO: improve day/night cycle
+	if (isDay()) {
+		m_defaultShader->Bind();
+		m_defaultShader->SetUniform3f("ambientLight", 0.25f, 0.25f, 0.25f);
+		m_defaultShader->SetUniform3f("lightColor", 1.0f, 1.0f, 1.0f);
+	} 
+	else {
+		m_defaultShader->Bind();
+		m_defaultShader->SetUniform3f("ambientLight", 0.0f, 0.0f, 0.0f);
+		m_defaultShader->SetUniform3f("lightColor", 0.1f, 0.1f, 0.1f);
+	}
 	glClearColor(m_skyColor.r, m_skyColor.g, m_skyColor.b, m_skyColor.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -237,12 +253,16 @@ void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection, b
 {	
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_depthMap);
+	m_defaultShader->Bind();
 	if (transparent) {
 		if (chunk.getWaterMesh()) {
+			m_defaultShader->SetUniformBool("useShadows", false);
 			renderMesh(*chunk.getWaterMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0), chunk.getPosition()), view, projection);
 		}
 	}
 	else {
+		if(isDay()) m_defaultShader->SetUniformBool("useShadows", true);
+		else m_defaultShader->SetUniformBool("useShadows", false);
 		renderMesh(*chunk.getMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0), chunk.getPosition()), view, projection);
 	}
 }
@@ -265,7 +285,7 @@ void Renderer::renderHighlight(glm::vec3 block, glm::mat4 view, glm::mat4 projec
 {
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), block);
 
-	glm::mat4 scaleModel = glm::scale(model, glm::vec3(1.15f, 1.15f, 1.15f));
+	glm::mat4 scaleModel = glm::scale(model, glm::vec3(1.05f, 1.05f, 1.05f));
 
 	renderMesh(*m_cubeMesh, *m_highlightShader, scaleModel, view, projection);
 }
@@ -333,23 +353,21 @@ void Renderer::initDepthMap()
 
 void Renderer::initLighting()
 {
-	float near_plane = 0.1f, far_plane = 400.0f;
+	float near_plane = 0.1f, far_plane = 500.0f;
 	float shadowRadius = 100.0f;
 
 	m_lightProjection = glm::ortho(-shadowRadius, shadowRadius, -shadowRadius, shadowRadius, near_plane, far_plane);
 
 	// Define azimuth and elevation angles
-	m_lightAzimuth = glm::radians(60.0f);   
-	m_lightElevation = glm::radians(-70.0f);
-
-	float lightDistance = 200.0f;
+	m_lightAzimuth = glm::pi<float>();
+	m_lightElevation = 0.3f;
 
 	m_lightDir.x = cos(m_lightElevation) * cos(m_lightAzimuth);
 	m_lightDir.y = sin(m_lightElevation);
 	m_lightDir.z = cos(m_lightElevation) * sin(m_lightAzimuth);
 
 	glm::vec3 lightTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-	m_lightPos = lightTarget - m_lightDir * lightDistance;
+	m_lightPos = lightTarget - m_lightDir * m_lightDistance;
 
 	m_lightView = glm::lookAt(m_lightPos, lightTarget, glm::vec3(0.0f, 1.0f, 0.0f));
 	m_lightSpaceMatrix = m_lightProjection * m_lightView;
@@ -358,23 +376,60 @@ void Renderer::initLighting()
 	m_defaultShader->SetUniform3f("lightDir", m_lightDir.x, m_lightDir.y, m_lightDir.z);
 }
 
-
-void Renderer::updateLighting(const glm::vec3& playerPosition)
+bool Renderer::isDay()
 {
-	glm::vec3 lightTarget = playerPosition;
+	return m_lightElevation >= 0.3f;
+}
 
+
+void Renderer::updateLighting(const glm::vec3& playerPosition, float deltaTime)
+{
+	// Day/Night cycle parameters
+	float cycleDuration = 20.0f; // Total duration of a day/night cycle in seconds
+	float minElevation = -1.5f; // noon
+	float maxElevation = 1.5f; // midnight
+	float eastAzimuth = 0.0f;  // Azimuth at sunrise (east)
+	float westAzimuth = 2*glm::pi<float>(); // Azimuth at sunset (west)
+
+	// Calculate cycle progress
+	static float elapsedTime = 0.0f;
+	elapsedTime += deltaTime; // Accumulate elapsed time
+	float cycleProgress = fmod(elapsedTime, cycleDuration) / cycleDuration; // Normalize [0, 1]
+
+	// Update light elevation (sine function for smooth U-shape)
+	m_lightElevation = minElevation + (maxElevation - minElevation) * 0.5f * (1.0f + sin(2.0f * glm::pi<float>() * cycleProgress));
+
+	// Update light azimuth (linear progression from east to west)
+	m_lightAzimuth = eastAzimuth + (westAzimuth - eastAzimuth) * cycleProgress;
+
+	// update sky color based on elevation
+	m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
+	if (isDay()) {
+		m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
+	}
+	else {
+		m_skyColor = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+	}
+
+	// Calculate light direction from azimuth and elevation
 	m_lightDir.x = cos(m_lightElevation) * cos(m_lightAzimuth);
 	m_lightDir.y = sin(m_lightElevation);
 	m_lightDir.z = cos(m_lightElevation) * sin(m_lightAzimuth);
 
-	m_lightPos = playerPosition - m_lightDir * 100.0f;
+	// Update light position (relative to the player)
+	glm::vec3 lightTarget = playerPosition;
+	m_lightPos = playerPosition + m_lightDir * m_lightDistance;
+
+	// Update shadow matrices
 	m_lightView = glm::lookAt(m_lightPos, lightTarget, glm::vec3(0.0f, 1.0f, 0.0f));
 	m_lightSpaceMatrix = m_lightProjection * m_lightView;
 
-
+	// Pass updated matrices to the shadow shader
 	m_shadowShader->Bind();
 	m_shadowShader->SetUniformMat4f("lightSpaceMatrix", m_lightSpaceMatrix);
 }
+
+
 
 
 unsigned int Renderer::loadTexture(const char* path)
@@ -410,6 +465,7 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO); 
 	glClear(GL_DEPTH_BUFFER_BIT); 
+	glDisable(GL_CULL_FACE);
 
 	m_shadowShader.get()->Bind();
 
@@ -428,6 +484,7 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 	glViewport(0, 0, window_width, window_height); 
+	glEnable(GL_CULL_FACE);
 }
 
 }; // namespace voxl

@@ -280,6 +280,14 @@ void Player::handleCollisions(float dx, float dy, float dz)
 	y2 = glm::floor(m_position.y + m_height);
 	z2 = glm::floor(m_position.z + m_width);
 
+    // Stuck check
+    while (m_chunkManager.isSolidBlock(floor(m_position.x), floor(m_position.y), floor(m_position.z))) {
+        m_position.y += 1.0f;
+        y1 = floor(m_position.y - m_position.y);
+        y2 = floor((m_position.y + (m_height + m_height + 2)));
+        if (floor(m_position.y) > Chunk::CHUNK_HEIGHT) break;
+    }
+
     // Vertical collision
     // down
     if (direction.y != 0) {

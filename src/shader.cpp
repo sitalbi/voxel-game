@@ -184,4 +184,13 @@ void Shader::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
+void Shader::SetUniformBool(const std::string& name, bool value)
+{
+	int location = GetUniformLocation(name);
+	if (location != -1)
+		glUniform1i(location, value);
+	else
+		std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
+}
+
 }; // namespace voxl

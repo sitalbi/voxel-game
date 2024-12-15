@@ -18,5 +18,6 @@ Voxel game project inspired by Minecraft. Written in C++ using OpenGL for render
 	- Sun and directional light
 - [ ] Optimization: 
 	- Greedy meshing
+	- Multi-threading
 - [ ] Add textures
 - [ ] Seed for terrain generation

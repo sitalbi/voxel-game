@@ -132,6 +132,9 @@ public:
 
 	unsigned int getCrosshairTexture() { return m_crosshairTexture; }
 
+
+    void updateLighting(const glm::vec3& lightTarget, float deltaTime);
+
     GLFWwindow* window;
     
 
@@ -160,10 +163,12 @@ private:
 
     float m_lightAzimuth = 0.0f;  
     float m_lightElevation = glm::radians(45.0f);
+	float m_lightDistance = 300.0f;
 
 	void initDepthMap();
 	void initLighting();
-    void updateLighting(const glm::vec3& lightTarget);
+
+	bool isDay();
 
 	unsigned int loadTexture(const char* path);
 

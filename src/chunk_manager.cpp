@@ -10,11 +10,12 @@ ChunkManager::ChunkManager()
 
 ChunkManager::~ChunkManager()
 {
-	for (auto& chunk : m_chunks)
+	for (auto& chunk : m_chunksCache)
 	{
 		delete chunk.second;
 	}
 	m_chunks.clear();
+	m_chunksCache.clear();
 }
 
 void ChunkManager::loadChunks(glm::vec3 playerPosition)
