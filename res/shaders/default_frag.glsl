@@ -12,6 +12,7 @@ uniform vec3 fogColor = vec3(0.0, 0.7, 1.0);
 uniform float fogStart = 100;
 uniform float fogEnd = 150;
 uniform bool useShadows = true;
+uniform bool isDay;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -27,26 +28,29 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     float currentDepth = projCoords.z;
 
-     float bias = max(0.02 * (1.0 - dot(normalize(normal.xyz), normalize(-lightDirection))), 0.0001);
+    float bias = max(0.00075 * (1.0 - dot(normal.xyz, lightDirection)), 0.0001);
+//    float diffuseFactor = max(dot(normal.xyz, -lightDirection),0.0);
+//    float bias = mix(0.0,0.0,diffuseFactor);
+
 
     // Percentage-Closer Filtering
-    // float shadow = 0.0;
-    // int samples = 2; 
-    // float texelSize = 1.0 / textureSize(shadowMap, 0).x;
-    //
-    // for (int x = -samples; x <= samples; x++)
-    // {
-    //     for (int y = -samples; y <= samples; y++)
-    //     {
-    //         vec2 offset = vec2(x, y) * texelSize;
-    //         float closestDepth = texture(shadowMap, projCoords.xy + offset).r;
-    //         shadow += currentDepth > closestDepth + bias ? 0.5 : 0.1;
-    //     }
-    // }
-    // shadow /= pow((samples * 2 + 1), 2);
+//     float shadow = 0.0;
+//     int samples = 2; 
+//     float texelSize = 1.0 / textureSize(shadowMap, 0).x;
+//    
+//     for (int x = -samples; x <= samples; x++)
+//     {
+//         for (int y = -samples; y <= samples; y++)
+//         {
+//             vec2 offset = vec2(x, y) * texelSize;
+//             float closestDepth = texture(shadowMap, projCoords.xy + offset).r;
+//             shadow += currentDepth > closestDepth + bias ? 0.75 : 0.1;
+//         }
+//     }
+//     shadow /= pow((samples * 2 + 1), 2);
 
     // No PCF
-    float shadow = currentDepth > closestDepth + bias ? 0.5 : 0.1;
+    float shadow = currentDepth > closestDepth + bias ? 0.75 : 0.1;
 
     return shadow;
 }
@@ -56,13 +60,17 @@ void main()
     vec3 finalColor;
     if(useShadows)
     {
-        // Calculate shadow
-        float shadow = ShadowCalculation(fragPosLightSpace);
-        finalColor = (1.0 - shadow) * vertexColor.rgb;
+        if(!isDay) {
+            finalColor = 0.75 * vertexColor.rgb;
+        } else {
+            // Calculate shadow
+            float shadow = ShadowCalculation(fragPosLightSpace);
+            finalColor = (1.0 - shadow) * vertexColor.rgb;
+        }
     }
     else
     {
-        finalColor = vertexColor.rgb;
+        finalColor = vertexColor.rgb * 0.9;
     }
 
 //    float depth = gl_FragCoord.z / gl_FragCoord.w; 

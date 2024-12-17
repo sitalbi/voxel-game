@@ -25,7 +25,7 @@ void main()
 
     // Compute light
     vec3 worldPos = vec3(model * vec4(aPos, 1.0));
-    float diff = max(dot(normal.xyz, normalize(-lightDir)), 0.0);
+    float diff = max(dot(normal.xyz, normalize(lightDir)), 0.0);
     vec3 lighting = (ambientLight + diff) * lightColor;
 
     // Pass to the fragment shader

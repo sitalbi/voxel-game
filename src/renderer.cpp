@@ -121,8 +121,9 @@ void Renderer::setupUI(Player& player, const glm::vec3& blockPos = glm::vec3(-10
 	if (blockPos.y != -10000.0f) {
 		ImGui::Text("Block position: (%.2f, %.2f, %.2f)", blockPos.x, blockPos.y, blockPos.z);
 	}
-	ImGui::Text("Light Azimuth: %.2f", m_lightAzimuth);
-	ImGui::Text("Light Elevation: %.2f", m_lightElevation);
+	/*ImGui::Text("Light Azimuth: %.2f", m_lightAzimuth);
+	ImGui::Text("Light Elevation: %.2f", m_lightElevation);*/
+	ImGui::Text("Light Direction: (%.2f, %.2f, %.2f)", m_lightDir.x, m_lightDir.y, m_lightDir.z);
 	ImGui::End();
 
 	// Crosshair
@@ -180,17 +181,6 @@ void Renderer::update(Player& player, const ChunkManager& chunkManager)
 	bool blockFound = player.blockFound();
 	renderShadowMap(chunkManager);
 
-	// TODO: improve day/night cycle
-	if (isDay()) {
-		m_defaultShader->Bind();
-		m_defaultShader->SetUniform3f("ambientLight", 0.25f, 0.25f, 0.25f);
-		m_defaultShader->SetUniform3f("lightColor", 1.0f, 1.0f, 1.0f);
-	} 
-	else {
-		m_defaultShader->Bind();
-		m_defaultShader->SetUniform3f("ambientLight", 0.0f, 0.0f, 0.0f);
-		m_defaultShader->SetUniform3f("lightColor", 0.1f, 0.1f, 0.1f);
-	}
 	glClearColor(m_skyColor.r, m_skyColor.g, m_skyColor.b, m_skyColor.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -261,8 +251,7 @@ void Renderer::renderChunk(Chunk& chunk, glm::mat4 view, glm::mat4 projection, b
 		}
 	}
 	else {
-		if(isDay()) m_defaultShader->SetUniformBool("useShadows", true);
-		else m_defaultShader->SetUniformBool("useShadows", false);
+		m_defaultShader->SetUniformBool("useShadows", true);
 		renderMesh(*chunk.getMesh(), *m_defaultShader, glm::translate(glm::mat4(1.0), chunk.getPosition()), view, projection);
 	}
 }
@@ -362,12 +351,13 @@ void Renderer::initLighting()
 	m_lightAzimuth = glm::pi<float>();
 	m_lightElevation = -1.5f;
 
+	// Calculate light direction
 	m_lightDir.x = cos(m_lightElevation) * cos(m_lightAzimuth);
 	m_lightDir.y = sin(m_lightElevation);
 	m_lightDir.z = cos(m_lightElevation) * sin(m_lightAzimuth);
 
 	glm::vec3 lightTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-	m_lightPos = lightTarget - m_lightDir * m_lightDistance;
+	m_lightPos = lightTarget + m_lightDir * m_lightDistance;
 
 	m_lightView = glm::lookAt(m_lightPos, lightTarget, glm::vec3(0.0f, 1.0f, 0.0f));
 	m_lightSpaceMatrix = m_lightProjection * m_lightView;
@@ -378,43 +368,60 @@ void Renderer::initLighting()
 
 bool Renderer::isDay()
 {
-	return m_lightElevation >= 0.3f;
+	return m_lightElevation >= 0.0f;
 }
 
 
 void Renderer::updateLighting(const glm::vec3& playerPosition, float deltaTime)
 {
 	// Day/Night cycle parameters
-	float cycleDuration = 20.0f; // Total duration of a day/night cycle in seconds
+	float cycleDuration = 30.0f; // duration of a day/night cycle in seconds
 	float minElevation = -1.5f; // noon
 	float maxElevation = 1.5f; // midnight
-	float eastAzimuth = 0.0f;  // Azimuth at sunrise (east)
-	float westAzimuth = 2*glm::pi<float>(); // Azimuth at sunset (west)
+	float eastAzimuth = 0.0f;  // sunrise
+	float westAzimuth = 2*glm::pi<float>(); // sunset
 
-	// Calculate cycle progress
 	static float elapsedTime = 0.0f;
-	elapsedTime += deltaTime; // Accumulate elapsed time
-	float cycleProgress = fmod(elapsedTime, cycleDuration) / cycleDuration; // Normalize [0, 1]
+	elapsedTime += deltaTime;
+	float cycleProgress = fmod(elapsedTime, cycleDuration) / cycleDuration;
 
-	// Update light elevation (sine function for smooth U-shape)
+	// Update light elevation
 	m_lightElevation = minElevation + (maxElevation - minElevation) * 0.5f * (1.0f + sin(2.0f * glm::pi<float>() * cycleProgress));
 
-	// Update light azimuth (linear progression from east to west)
+	// Update light azimuth
 	m_lightAzimuth = eastAzimuth + (westAzimuth - eastAzimuth) * cycleProgress;
 
-	// update sky color based on elevation
-	m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
-	if (isDay()) {
-		m_skyColor = glm::vec4(0.0f, 0.7f, 1.0f, 1.0f);
-	}
-	else {
-		m_skyColor = glm::vec4(0.01f, 0.01f, 0.01f, 1.0f);
+	// normalize light elevation todo try to smooth the day night transition
+	float normalizedElevation = (m_lightElevation - minElevation) / (maxElevation - minElevation);
+	if (!isDay()) {
+		normalizedElevation = 0.0f;
 	}
 
-	// Calculate light direction from azimuth and elevation
+	float ambientLight = 0.25f * normalizedElevation;
+	float lightColor = std::clamp(1.0f * normalizedElevation, 0.1f, 1.0f);
+
+	m_skyColor = glm::vec4(0.1f, 0.7f, 1.0f, 1.0f);
+	m_skyColor *= normalizedElevation;
+	if (!isDay()) {
+		m_skyColor = glm::vec4(0.1f, 0.7f, 1.0f, 1.0f) * 0.1f;
+	}
+
+	// Update light uniforms
+	m_defaultShader->Bind();
+	m_defaultShader->SetUniform3f("ambientLight", ambientLight, ambientLight, ambientLight);
+	m_defaultShader->SetUniform3f("lightColor", lightColor, lightColor, lightColor);
+
 	m_lightDir.x = cos(m_lightElevation) * cos(m_lightAzimuth);
-	m_lightDir.y = sin(m_lightElevation);
+	m_lightDir.y = abs(sin(m_lightElevation)); // Ensure light is always above the horizon
 	m_lightDir.z = cos(m_lightElevation) * sin(m_lightAzimuth);
+
+	m_defaultShader->SetUniform3f("lightDir", m_lightDir.x, m_lightDir.y, m_lightDir.z);
+	if (m_lightElevation >= 0.0f) {
+		m_defaultShader->SetUniformBool("isDay", true);
+	}
+	else {
+		m_defaultShader->SetUniformBool("isDay", false);
+	}
 
 	// Update light position (relative to the player)
 	glm::vec3 lightTarget = playerPosition;
@@ -465,7 +472,8 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO); 
 	glClear(GL_DEPTH_BUFFER_BIT); 
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
 
 	m_shadowShader.get()->Bind();
 
@@ -483,8 +491,9 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
-	glViewport(0, 0, window_width, window_height); 
-	glEnable(GL_CULL_FACE);
+	glViewport(0, 0, window_width, window_height);
+	//glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 }
 
 }; // namespace voxl

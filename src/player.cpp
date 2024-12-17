@@ -12,6 +12,17 @@ Player::Player(glm::vec3 position, Camera& camera, ChunkManager& chunkManager) :
 	updateCamera();
 	m_playerForward = camera.getForward();
 	m_playerUp = camera.getUp();
+	m_isFlying = true;
+    if (m_isFlying) {
+        m_speed = m_defaultSpeed * 2.0f;
+        m_speedMultiplier = m_defaultSpeedMultiplier * 2.0f;
+        m_defaultSpeedMultiplier = 2.0f;
+    }
+    else {
+        m_speed = m_defaultSpeed;
+        m_speedMultiplier = m_defaultSpeedMultiplier;
+        m_defaultSpeedMultiplier = 1.0f;
+    }
 }
 
 void Player::update(float deltaTime) {
