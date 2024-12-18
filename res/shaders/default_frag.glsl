@@ -28,7 +28,8 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     float currentDepth = projCoords.z;
 
-    float bias = max(0.00075 * (1.0 - dot(normal.xyz, lightDirection)), 0.0001);
+    float bias = max(0.0075 * (1.0 - dot(normal.xyz, lightDirection)), 0.0001);
+    //float bias = 0.00005;
 //    float diffuseFactor = max(dot(normal.xyz, -lightDirection),0.0);
 //    float bias = mix(0.0,0.0,diffuseFactor);
 
@@ -50,7 +51,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 //     shadow /= pow((samples * 2 + 1), 2);
 
     // No PCF
-    float shadow = currentDepth > closestDepth + bias ? 0.75 : 0.1;
+    float shadow = currentDepth > closestDepth ? 0.75 : 0.1;
 
     return shadow;
 }
@@ -63,9 +64,14 @@ void main()
         if(!isDay) {
             finalColor = 0.75 * vertexColor.rgb;
         } else {
-            // Calculate shadow
-            float shadow = ShadowCalculation(fragPosLightSpace);
-            finalColor = (1.0 - shadow) * vertexColor.rgb;
+            // tmp fix for shadow acne on vertical faces
+            if(dot(normal.xyz, lightDirection) > 0.01) {
+                float shadow = ShadowCalculation(fragPosLightSpace);
+                finalColor = (1.0 - shadow) * vertexColor.rgb;
+            } else {
+                finalColor = vertexColor.rgb;
+            }
+            
         }
     }
     else

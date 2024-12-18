@@ -472,8 +472,9 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_depthMapFBO); 
 	glClear(GL_DEPTH_BUFFER_BIT); 
-	//glDisable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT);
+
+	// Front face culling to fix peter panning
+	glCullFace(GL_FRONT);
 
 	m_shadowShader.get()->Bind();
 
@@ -492,7 +493,7 @@ void Renderer::renderShadowMap(const ChunkManager& chunkManager)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 	glViewport(0, 0, window_width, window_height);
-	//glEnable(GL_CULL_FACE);
+	// Back face culling again
 	glCullFace(GL_BACK);
 }
 
