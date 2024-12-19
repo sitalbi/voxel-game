@@ -11,8 +11,8 @@
 #include <chunk.h>
 
 
-#define window_width 1280
-#define window_height 720
+#define window_width 1920
+#define window_height 1080
 
 namespace voxl {
 
@@ -163,7 +163,14 @@ private:
 
     float m_lightAzimuth = 0.0f;  
     float m_lightElevation = glm::radians(45.0f);
-	float m_lightDistance = 300.0f;
+	float m_lightDistance = 100.0f;
+
+	// Day/Night cycle parameters
+    float m_cycleDuration; // Duration of a day/night cycle in seconds
+    float m_minElevation; // Noon elevation
+	float m_maxElevation; // Midnight elevation
+	float m_eastAzimuth; // Sunrise azimuth
+	float m_westAzimuth; // Sunset azimuth
 
 	void initDepthMap();
 	void initLighting();

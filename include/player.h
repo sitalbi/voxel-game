@@ -55,6 +55,9 @@ public:
 
 
 private:
+	std::unordered_map<int, bool> m_keyStates;
+	std::unordered_map<int, bool> m_mouseButtonStates;
+
     glm::vec3 m_position;
 	glm::vec3 m_direction;
 	glm::vec3 m_cameraPosition;
@@ -66,10 +69,6 @@ private:
 	glm::vec3 m_blockNormal;
 
     bool isSprinting = false;
-    bool f1Pressed = false;
-	bool f2Pressed = false;
-	bool mouseLeftClicked = false;
-	bool mouseRightClicked = false;
     bool wireframeMode = false;
 	bool m_blockFound = false;
 	bool m_isGrounded = true;
@@ -94,6 +93,10 @@ private:
     void updateCamera();
 
 	void handleCollisions(float dx, float dy, float dz);
+
+    void onPressedMouse(int button, const std::function<void()>& callback);
+
+	void onPressedKey(int key, const std::function<void()>& callback);
 };
 
 

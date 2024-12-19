@@ -325,7 +325,7 @@ void Renderer::initDepthMap()
 
 	glGenTextures(1, &m_depthMap);
 	glBindTexture(GL_TEXTURE_2D, m_depthMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -342,7 +342,14 @@ void Renderer::initDepthMap()
 
 void Renderer::initLighting()
 {
-	float near_plane = 0.1f, far_plane = 500.0f;
+	// Day/Night cycle parameters initialization
+	m_cycleDuration = 30.0f; 
+	m_minElevation = -1.5f; 
+	m_maxElevation = 1.5f; 
+	m_eastAzimuth = 0.0f; 
+	m_westAzimuth = 2 * glm::pi<float>();
+
+	float near_plane = 0.1f, far_plane = 300.0f;
 	float shadowRadius = 100.0f;
 
 	m_lightProjection = glm::ortho(-shadowRadius, shadowRadius, -shadowRadius, shadowRadius, near_plane, far_plane);
@@ -374,25 +381,20 @@ bool Renderer::isDay()
 
 void Renderer::updateLighting(const glm::vec3& playerPosition, float deltaTime)
 {
-	// Day/Night cycle parameters
-	float cycleDuration = 30.0f; // duration of a day/night cycle in seconds
-	float minElevation = -1.5f; // noon
-	float maxElevation = 1.5f; // midnight
-	float eastAzimuth = 0.0f;  // sunrise
-	float westAzimuth = 2*glm::pi<float>(); // sunset
+	
 
 	static float elapsedTime = 0.0f;
 	elapsedTime += deltaTime;
-	float cycleProgress = fmod(elapsedTime, cycleDuration) / cycleDuration;
+	float cycleProgress = fmod(elapsedTime, m_cycleDuration) / m_cycleDuration;
 
 	// Update light elevation
-	m_lightElevation = minElevation + (maxElevation - minElevation) * 0.5f * (1.0f + sin(2.0f * glm::pi<float>() * cycleProgress));
+	m_lightElevation = m_minElevation + (m_maxElevation - m_minElevation) * 0.5f * (1.0f + sin(2.0f * glm::pi<float>() * cycleProgress));
 
 	// Update light azimuth
-	m_lightAzimuth = eastAzimuth + (westAzimuth - eastAzimuth) * cycleProgress;
+	m_lightAzimuth = m_eastAzimuth + (m_westAzimuth - m_eastAzimuth) * cycleProgress;
 
 	// normalize light elevation todo try to smooth the day night transition
-	float normalizedElevation = (m_lightElevation - minElevation) / (maxElevation - minElevation);
+	float normalizedElevation = (m_lightElevation - m_minElevation) / (m_maxElevation - m_minElevation);
 	if (!isDay()) {
 		normalizedElevation = 0.0f;
 	}

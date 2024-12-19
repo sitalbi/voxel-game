@@ -104,99 +104,76 @@ void Player::processInput(GLFWwindow* window, float deltaTime) {
     }
 
     // If mouse left is pressed
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        if (!mouseLeftClicked) {
-            if (m_blockFound) {
-                glm::vec3 newBlockPosition = m_blockPosition + m_blockNormal;
+    onPressedMouse(GLFW_MOUSE_BUTTON_LEFT, [&]() {
+        if (m_blockFound) {
+            glm::vec3 newBlockPosition = m_blockPosition + m_blockNormal;
 
-                Chunk* chunk = m_chunkManager.getChunk(newBlockPosition.x, newBlockPosition.y, newBlockPosition.z);
+            Chunk* chunk = m_chunkManager.getChunk(newBlockPosition.x, newBlockPosition.y, newBlockPosition.z);
 
-                if (chunk != nullptr) {
-                    int blockX = glm::mod(glm::floor(newBlockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
-                    int blockY = glm::mod(glm::floor(newBlockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
-                    int blockZ = glm::mod(glm::floor(newBlockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
+            if (chunk != nullptr) {
+                int blockX = glm::mod(glm::floor(newBlockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
+                int blockY = glm::mod(glm::floor(newBlockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
+                int blockZ = glm::mod(glm::floor(newBlockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
 
-                    glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
-                    if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
-                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
-                        chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, getSelectedBlock());
+                glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
+                if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
+                    localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
+                    chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, getSelectedBlock());
 
-                        m_chunkManager.updateChunk(chunk);
-                    }
+                    m_chunkManager.updateChunk(chunk);
                 }
             }
-			mouseLeftClicked = true;
-        } 
-	}
-	else {
-		mouseLeftClicked = false;
-	}
+        }
+        });
 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-        if (!mouseRightClicked) {
-            if (m_blockFound) {
-                Chunk* chunk = m_chunkManager.getChunk(m_blockPosition.x, m_blockPosition.y, m_blockPosition.z);
+	// If mouse right is pressed
+    onPressedMouse(GLFW_MOUSE_BUTTON_RIGHT, [&]() {
+        if (m_blockFound) {
+            Chunk* chunk = m_chunkManager.getChunk(m_blockPosition.x, m_blockPosition.y, m_blockPosition.z);
 
-                if (chunk != nullptr) {
-                    int blockX = glm::mod(glm::floor(m_blockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
-                    int blockY = glm::mod(glm::floor(m_blockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
-                    int blockZ = glm::mod(glm::floor(m_blockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
+            if (chunk != nullptr) {
+                int blockX = glm::mod(glm::floor(m_blockPosition.x), static_cast<float>(Chunk::CHUNK_SIZE));
+                int blockY = glm::mod(glm::floor(m_blockPosition.y), static_cast<float>(Chunk::CHUNK_HEIGHT));
+                int blockZ = glm::mod(glm::floor(m_blockPosition.z), static_cast<float>(Chunk::CHUNK_SIZE));
 
-                    glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
-                    if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
-                        localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
-                        chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::None);
-                        
-						m_chunkManager.updateChunk(chunk);
-                    }
+                glm::ivec3 localBlockPos = glm::ivec3(blockX, blockY, blockZ);
+                if (localBlockPos.x >= 0 && localBlockPos.y >= 0 && localBlockPos.z >= 0 &&
+                    localBlockPos.x < Chunk::CHUNK_SIZE && localBlockPos.y < Chunk::CHUNK_HEIGHT && localBlockPos.z < Chunk::CHUNK_SIZE) {
+                    chunk->setBlockType(localBlockPos.x, localBlockPos.y, localBlockPos.z, BlockType::None);
+
+                    m_chunkManager.updateChunk(chunk);
                 }
             }
-            mouseRightClicked = true;
         }
-    }
-    else {
-        mouseRightClicked = false;
-    }
-	
+		});
 
 
-    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS) {
-        if (!f1Pressed) {
-            wireframeMode = !wireframeMode;
-            if (wireframeMode) {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                glDisable(GL_CULL_FACE);
-            }
-            else {
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glEnable(GL_CULL_FACE);
-            }
-            f1Pressed = true;
-        }
-    }
-    else {
-        f1Pressed = false;
-    }
 
-    if (glfwGetKey(window, GLFW_KEY_F2) == GLFW_PRESS) {
-        if (!f2Pressed) {
-			m_isFlying = !m_isFlying;
-            if (m_isFlying) {
-				m_speed = m_defaultSpeed * 2.0f;
-				m_speedMultiplier = m_defaultSpeedMultiplier * 2.0f;
-				m_defaultSpeedMultiplier = 2.0f;
-            }
-            else {
-				m_speed = m_defaultSpeed;
-				m_speedMultiplier = m_defaultSpeedMultiplier;
-				m_defaultSpeedMultiplier = 1.0f;
-            }
-            f2Pressed = true;
+    onPressedKey(GLFW_KEY_F1, [&]() {
+        wireframeMode = !wireframeMode;
+        if (wireframeMode) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_CULL_FACE);
         }
-    }
-    else {
-        f2Pressed = false;
-    }
+        else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_CULL_FACE);
+        }
+    });
+
+    onPressedKey(GLFW_KEY_F2, [&]() {
+        m_isFlying = !m_isFlying;
+        if (m_isFlying) {
+            m_speed = m_defaultSpeed * 2.0f;
+            m_speedMultiplier = m_defaultSpeedMultiplier * 2.0f;
+            m_defaultSpeedMultiplier = 2.0f;
+        }
+        else {
+            m_speed = m_defaultSpeed;
+            m_speedMultiplier = m_defaultSpeedMultiplier;
+            m_defaultSpeedMultiplier = 1.0f;
+        }
+        });
 
 
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -378,6 +355,23 @@ void Player::handleCollisions(float dx, float dy, float dz)
     }
 }
 
+void Player::onPressedMouse(int button, const std::function<void()>& callback)
+{
+	bool isPressed = glfwGetMouseButton(glfwGetCurrentContext(), button) == GLFW_PRESS;
+	if (isPressed && !m_mouseButtonStates[button]) {
+		callback();
+	}
+	m_mouseButtonStates[button] = isPressed;
+}
 
+void Player::onPressedKey(int key, const std::function<void()>& callback)
+{
+    bool isPressed = glfwGetKey(glfwGetCurrentContext(), key) == GLFW_PRESS;
+    if (isPressed && !m_keyStates[key]) {
+        callback();
+    }
+    m_keyStates[key] = isPressed;
+
+}
 
 } // namespace voxl
