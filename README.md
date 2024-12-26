@@ -1,6 +1,6 @@
 # Voxel Game
 
-Voxel game project inspired by Minecraft. Written in C++ using OpenGL for rendering.
+Simple voxel game project inspired by Minecraft. Written in C++ using OpenGL for rendering.
 
 ## Visuals
 ![voxl_image](https://simono.fr/voxl2.png)
